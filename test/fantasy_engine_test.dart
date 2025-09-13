@@ -7,9 +7,9 @@ void main() {
   test('enter then continue with same initialCount on bottom Four+', () {
     // 突入（Top QQ → 14）
     final b1 = Board(
-      top: [c('Qh'), c('Qs'), c('2c')],
-      middle: [c('3d'), c('4s'), c('5c'), c('7d'), c('9h')],
-      bottom: [c('Ah'), c('Kd'), c('7s'), c('6c'), c('2d')],
+      top: [c('Qh'), c('Qs'), c('2c')], // Pair Q
+      middle: [c('Kd'), c('Ks'), c('7h'), c('5c'), c('3d')], // Pair K (>= Top)
+      bottom: [c('Td'), c('9s'), c('9h'), c('6c'), c('Tc')], // Two Pair (>= Middle)
     );
     final e1 = BoardEval.from(b1);
     final enter = FantasyState.inactive();
@@ -43,12 +43,24 @@ void main() {
     expect(next.initialCount, 0);
   });
 
+  test('no fantasy entry on foul even with top pair', () {
+    // Top AA but Middle stronger than Bottom/Top order invalid → FOUL → no entry
+    final b = Board(
+      top: [c('As'), c('Ad'), c('2c')],
+      middle: [c('3c'), c('8d'), c('8s'), c('Jc'), c('Ah')],
+      bottom: [c('Td'), c('9s'), c('9h'), c('6c'), c('Tc')],
+    );
+    final e = BoardEval.from(b);
+    final st = FantasyEngine.nextState(const FantasyState.inactive(), e);
+    expect(st.active, isFalse);
+  });
+
   test('active then continue on top trips keeps original initialCount', () {
     final current = FantasyState.active(15);
     final b = Board(
-      top: [c('5h'), c('5d'), c('5s')],
-      middle: [c('3d'), c('4s'), c('5c'), c('7d'), c('9h')],
-      bottom: [c('2d'), c('3c'), c('4d'), c('6s'), c('9c')],
+      top: [c('5h'), c('5d'), c('5s')], // Trips Top
+      middle: [c('2h'), c('6h'), c('8h'), c('9h'), c('Th')], // Flush (>= Top)
+      bottom: [c('9s'), c('9d'), c('9c'), c('4d'), c('4s')], // Full House or Trips? (here Trips 9 + 4 4 makes Full House? Actually 9 9 9 4 4)
     );
     final e = BoardEval.from(b);
     final next = FantasyEngine.nextState(current, e);

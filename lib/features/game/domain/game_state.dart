@@ -45,6 +45,23 @@ class GameState {
         .add('startHand A:${fantasyA.initialCount} B:${fantasyB.initialCount}');
   }
 
+  void deal(Player p) {
+    if (phase == GamePhase.committed) {
+      throw StateError('Hand already ended');
+    }
+    final eng = engineOf(p);
+    if (eng.tray.isNotEmpty ||
+        eng.builder.top.isNotEmpty ||
+        eng.builder.middle.isNotEmpty ||
+        eng.builder.bottom.isNotEmpty) {
+      throw StateError('Already dealt for ${p.name}');
+    }
+    final f = p == Player.a ? fantasyA : fantasyB;
+    eng.startWithFantasy(initialFantasyCount: f.active ? f.initialCount : 0);
+    phase = GamePhase.placing;
+    history.add('deal ${p.name}:${f.initialCount}');
+  }
+
   PineappleEngine engineOf(Player p) => p == Player.a ? aEngine : bEngine;
 
   void place(Player p, Slot slot, PlayingCard card) {

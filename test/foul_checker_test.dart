@@ -13,4 +13,17 @@ void main() {
     final e = BoardEval.from(b);
     expect(FoulChecker.isFoul(e), isTrue);
   });
+
+  test('foul when middle pair lower than top pair', () {
+    // Top: Q K K  (Pair K)
+    // Middle: 3 8 8 J A (Pair 8)
+    // Bottom: T 9 9 6 T (Two pair T&9)
+    final b = Board(
+      top: [c('Qh'), c('Ks'), c('Kd')],
+      middle: [c('3c'), c('8d'), c('8s'), c('Jc'), c('Ah')],
+      bottom: [c('Td'), c('9s'), c('9h'), c('6c'), c('Tc')],
+    );
+    final e = BoardEval.from(b);
+    expect(FoulChecker.isFoul(e), isTrue);
+  });
 }

@@ -4,6 +4,7 @@ import 'package:ofc_app_core/features/game/domain/fantasy_engine.dart';
 import 'package:ofc_app_core/features/game/domain/foul_checker.dart';
 import 'package:ofc_app_core/features/game/domain/ruleset.dart';
 import 'package:ofc_app_core/features/game/domain/pineapple_engine.dart';
+import 'package:ofc_app_core/core/models/playing_card.dart';
 import 'package:ofc_app_core/features/game/domain/hand_category3.dart';
 import 'package:ofc_app_core/features/game/domain/hand_category5.dart';
 
@@ -13,6 +14,49 @@ class ResultScreen extends StatelessWidget {
   final Ruleset ruleset;
   final List<ActionLogEntry>? history;
   const ResultScreen({super.key, required this.board, required this.nextFantasy, required this.ruleset, this.history});
+
+  String _rank(PlayingCard c) {
+    switch (c.rank.name) {
+      case 'ace':
+        return 'A';
+      case 'king':
+        return 'K';
+      case 'queen':
+        return 'Q';
+      case 'jack':
+        return 'J';
+      case 'ten':
+        return 'T';
+      default:
+        return c.rank.value.toString();
+    }
+  }
+
+  String _suit(PlayingCard c) {
+    switch (c.suit.name) {
+      case 'hearts':
+        return '♥️';
+      case 'diamonds':
+        return '♦️';
+      case 'spades':
+        return '♠️';
+      default:
+        return '♣️';
+    }
+  }
+
+  bool _isRed(PlayingCard c) => c.suit.name == 'hearts' || c.suit.name == 'diamonds';
+
+  Widget _card(PlayingCard c) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade400),
+        ),
+        child: Text('${_rank(c)}${_suit(c)}',
+            style: TextStyle(fontSize: 18, color: _isRed(c) ? Colors.red : Colors.black87, fontWeight: FontWeight.w600)),
+      );
 
   String _cat3Name(Hand3Rank r) => switch (r.category) {
         Hand3Category.threeOfAKind => 'Trips',
@@ -65,8 +109,16 @@ class ResultScreen extends StatelessWidget {
                     )),
             const SizedBox(height: 12),
             row('Top', _cat3Name(eval.top), rTop),
+            const SizedBox(height: 6),
+            Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.center, children: [for (final c in board.top) _card(c)]),
+            const SizedBox(height: 12),
             row('Middle', _cat5Name(eval.middle), rMid),
+            const SizedBox(height: 6),
+            Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.center, children: [for (final c in board.middle) _card(c)]),
+            const SizedBox(height: 12),
             row('Bottom', _cat5Name(eval.bottom), rBot),
+            const SizedBox(height: 6),
+            Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.center, children: [for (final c in board.bottom) _card(c)]),
             const Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

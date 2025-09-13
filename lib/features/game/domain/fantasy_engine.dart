@@ -1,6 +1,7 @@
 import 'board.dart';
 import 'hand_category3.dart';
 import 'hand_category5.dart';
+import 'foul_checker.dart';
 
 class FantasyState {
   final bool active;
@@ -37,6 +38,10 @@ class FantasyEngine {
 
   // 現在の Fantasy 状態とこのハンドの結果から、次ハンドの状態を返す
   static FantasyState nextState(FantasyState current, BoardEval e) {
+    // FOUL は突入・継続ともに無効
+    if (FoulChecker.isFoul(e)) {
+      return const FantasyState.inactive();
+    }
     if (!current.active) {
       final count = entryCount(e);
       return count > 0
