@@ -35,9 +35,14 @@ class HomePage extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
+                  final seed = await _chooseSeed(context);
+                  if (seed == null) return; // キャンセル
+                  // 選択したシードでPracticeを開始
+                  // シードはGameScreenへ渡し、画面内/結果画面で表示する
+                  // ignore: use_build_context_synchronously
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const GameScreen()),
+                    MaterialPageRoute(builder: (_) => GameScreen(seed: seed)),
                   );
                 },
                 child: const Text('Practice'),
@@ -60,4 +65,81 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
+}
+
+enum _SeedMode { random, custom }
+
+Future<int?> _chooseSeed(BuildContext context) async {
+  _SeedMode mode = _SeedMode.random;
+  final controller = TextEditingController();
+  int? parsed;
+
+  int genRandomSeed() => DateTime.now().microsecondsSinceEpoch & 0x7FFFFFFF;
+
+  return showDialog<int>(
+    context: context,
+    builder: (ctx) {
+      return StatefulBuilder(builder: (ctx, setState) {
+        final customValid = int.tryParse(controller.text.trim()) != null;
+        return AlertDialog(
+          title: const Text('Practice シードを選択'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<_SeedMode>(
+                title: const Text('ランダム'),
+                value: _SeedMode.random,
+                groupValue: mode,
+                onChanged: (v) => setState(() => mode = v!),
+              ),
+              RadioListTile<_SeedMode>(
+                title: const Text('指定する'),
+                value: _SeedMode.custom,
+                groupValue: mode,
+                onChanged: (v) => setState(() => mode = v!),
+              ),
+              TextField(
+                controller: controller,
+                enabled: mode == _SeedMode.custom,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'シード (整数)',
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              if (mode == _SeedMode.custom && controller.text.isNotEmpty && !customValid)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('整数で入力してください', style: TextStyle(color: Colors.red)),
+                  ),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(null),
+              child: const Text('キャンセル'),
+            ),
+            ElevatedButton(
+              onPressed: mode == _SeedMode.custom && !customValid
+                  ? null
+                  : () {
+                      if (mode == _SeedMode.random) {
+                        Navigator.of(ctx).pop(genRandomSeed());
+                      } else {
+                        parsed = int.tryParse(controller.text.trim());
+                        if (parsed != null) {
+                          Navigator.of(ctx).pop(parsed);
+                        }
+                      }
+                    },
+              child: const Text('開始'),
+            ),
+          ],
+        );
+      });
+    },
+  );
 }

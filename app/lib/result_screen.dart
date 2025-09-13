@@ -7,13 +7,15 @@ import 'package:ofc_app_core/features/game/domain/pineapple_engine.dart';
 import 'package:ofc_app_core/core/models/playing_card.dart';
 import 'package:ofc_app_core/features/game/domain/hand_category3.dart';
 import 'package:ofc_app_core/features/game/domain/hand_category5.dart';
+import 'package:flutter/services.dart';
 
 class ResultScreen extends StatelessWidget {
   final Board board;
   final FantasyState nextFantasy;
   final Ruleset ruleset;
   final List<ActionLogEntry>? history;
-  const ResultScreen({super.key, required this.board, required this.nextFantasy, required this.ruleset, this.history});
+  final int seed;
+  const ResultScreen({super.key, required this.board, required this.nextFantasy, required this.ruleset, required this.seed, this.history});
 
   String _rank(PlayingCard c) {
     switch (c.rank.name) {
@@ -107,6 +109,26 @@ class ResultScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       color: foul ? Colors.red : Colors.green,
                     )),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: SelectableText(
+                    'Seed: $seed',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Seedをコピー',
+                  icon: const Icon(Icons.copy_outlined, size: 18),
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(text: seed.toString()));
+                  },
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
             row('Top', _cat3Name(eval.top), rTop),
             const SizedBox(height: 6),

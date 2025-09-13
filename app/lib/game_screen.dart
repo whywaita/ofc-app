@@ -9,7 +9,8 @@ import 'package:ofc_app_core/features/game/domain/cycle_logic.dart';
 import 'package:ofc_app_core/features/game/domain/pineapple_engine.dart';
 
 class GameScreen extends StatefulWidget {
-  const GameScreen({super.key});
+  final int seed;
+  const GameScreen({super.key, required this.seed});
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -31,7 +32,7 @@ class _GameScreenState extends State<GameScreen> {
 
   void _deal() {
     setState(() {
-      _eng = PineappleEngine(Deck.standard(seed: 42))
+      _eng = PineappleEngine(Deck.standard(seed: widget.seed))
         ..startHand(fantasyInitialCount: _fantasy.active ? _fantasy.initialCount : 0);
       _status = 'Dealt ${_fantasy.active ? _fantasy.initialCount : 5}';
     });
@@ -212,6 +213,11 @@ class _GameScreenState extends State<GameScreen> {
           children: [
             const SizedBox(height: 12),
             Text('Status: $_status'),
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SelectableText('Seed: ${widget.seed}', style: const TextStyle(color: Colors.grey)),
+            ),
             const SizedBox(height: 8),
             const Divider(),
             _dropZone(title: 'Top', current: top, max: 3, slot: Slot.top),
@@ -294,7 +300,7 @@ class _GameScreenState extends State<GameScreen> {
                                 final next = FantasyEngine.nextState(_fantasy, e);
                               final nextInit = await Navigator.of(context).push<int>(
                                 MaterialPageRoute(
-                                  builder: (_) => ResultScreen(board: b, nextFantasy: next, ruleset: _ruleset, history: List.of(_eng!.history)),
+                                  builder: (_) => ResultScreen(board: b, nextFantasy: next, ruleset: _ruleset, seed: widget.seed, history: List.of(_eng!.history)),
                                 ),
                               );
                                 setState(() {
