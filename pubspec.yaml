@@ -1,0 +1,10 @@
+name: ofc_app_core
+description: Core domain logic for Open Face Chinese Poker (OFCP).
+version: 0.0.1
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dev_dependencies:
+  lints: ^3.0.0
+  test: ^1.24.0
+
