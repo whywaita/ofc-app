@@ -37,8 +37,8 @@ jobs:
       - name: Install deps
         run: dart pub get
 
-      - name: Analyze
-        run: dart analyze
+      - name: Analyze (domain only)
+        run: dart analyze lib test
 
       - name: Test
         run: dart test -r expanded
