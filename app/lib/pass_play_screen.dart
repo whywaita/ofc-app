@@ -82,7 +82,7 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
   Set<String> _ids() => CycleLogic.currentCycleIds(eng.history);
   int _last() => CycleLogic.lastDrawCount(eng.history);
   int _placed(Set<String> ids) => CycleLogic.placedCountForCycle(eng.builder, ids);
-  List<PlayingCard> _leftovers(Set<String> ids) => CycleLogic.trayCardsForCycle(eng.tray, ids);
+  // List<PlayingCard> _leftovers(Set<String> ids) => CycleLogic.trayCardsForCycle(eng.tray, ids);
 
   Widget _drop(String title, List<PlayingCard> currentCards, int max, Slot slot) {
     return DragTarget<PlayingCard>(
@@ -158,7 +158,11 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
       }
       // 両者が確定済みかチェック
       if (gs.boardA == null || gs.boardB == null) {
-        setState(() => status = 'Waiting opponent');
+        // 相手が未確定なら、その相手へ手番を戻す
+        setState(() {
+          current = Player.a;
+          status = 'Waiting opponent';
+        });
         return;
       }
       // Both committed → show result
@@ -187,12 +191,7 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
 
     // Next 3: auto-discard leftovers then draw
     if (_last() == 3) {
-      final ids = _ids();
-      final leftovers = _leftovers(ids);
-      for (final c in leftovers) {
-        eng.tray.remove(c);
-        eng.history.add(ActionLogEntry('discard', {'card': c.toString()}));
-      }
+      CycleLogic.autoDiscardForNext(eng);
     }
     setState(() {
       // 自動Discard後に readiness を再評価し、安全に nextCycle する
@@ -308,6 +307,17 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            if (eng.discards.isNotEmpty) ...[
+              Text('Your Discards (${eng.discards.length})', textAlign: TextAlign.center),
+              const SizedBox(height: 6),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 6,
+                runSpacing: 6,
+                children: [for (final c in eng.discards) _card(c)],
+              ),
+            ],
           ],
         ),
       ),

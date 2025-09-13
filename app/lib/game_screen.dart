@@ -120,7 +120,8 @@ class _GameScreenState extends State<GameScreen> {
 
   int _lastDrawCount() => CycleLogic.lastDrawCount(_eng!.history);
   int _placedCountForCycle(Set<String> ids) => CycleLogic.placedCountForCycle(_eng!.builder, ids);
-  List<PlayingCard> _trayCardsForCycle(Set<String> ids) => CycleLogic.trayCardsForCycle(_eng!.tray, ids);
+  // kept for clarity but unused after unifying auto-discard via CycleLogic
+  // List<PlayingCard> _trayCardsForCycle(Set<String> ids) => CycleLogic.trayCardsForCycle(_eng!.tray, ids);
 
   Widget _dropZone({required String title, required List<PlayingCard> current, required int max, required Slot slot}) {
     return DragTarget<PlayingCard>(
@@ -198,21 +199,7 @@ class _GameScreenState extends State<GameScreen> {
     final middle = eng?.builder.middle ?? const <PlayingCard>[];
     final bottom = eng?.builder.bottom ?? const <PlayingCard>[];
     // Next 3 可否: 初手5は5枚配置、以降は2枚配置
-    bool canNext;
-    if (eng == null) {
-      canNext = false;
-    } else {
-      final lastCount = _lastDrawCount();
-      final ids = _currentCycleIds();
-      final placed = _placedCountForCycle(ids);
-      if (lastCount == 5) {
-        canNext = placed >= 5;
-      } else if (lastCount == 3) {
-        canNext = placed >= 2;
-      } else {
-        canNext = false;
-      }
-    }
+    final canNext = eng != null && CycleLogic.canNext(eng);
     // Commit判定は下部の主ボタンで直接確認するため未使用
     _movableIds = _currentCycleIds();
 
@@ -321,17 +308,7 @@ class _GameScreenState extends State<GameScreen> {
                               } else {
                                 setState(() {
                                   final eng2 = _eng!;
-                                  final lastCount = _lastDrawCount();
-                                  final ids = _currentCycleIds();
-                                  if (lastCount == 3) {
-                                    final leftovers = _trayCardsForCycle(ids);
-                                    for (final c in leftovers) {
-                                      eng2.tray.remove(c);
-                                      eng2.history.add(
-                                        ActionLogEntry('discard', {'card': c.toString()}),
-                                      );
-                                    }
-                                  }
+                                  CycleLogic.autoDiscardForNext(eng2);
                                   eng2.nextCycle();
                                   _status = 'Drew 3';
                                 });
@@ -343,6 +320,17 @@ class _GameScreenState extends State<GameScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            if (eng != null && eng.discards.isNotEmpty) ...[
+              Text('Discarded (${eng.discards.length})', textAlign: TextAlign.center),
+              const SizedBox(height: 6),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 6,
+                runSpacing: 6,
+                children: [for (final c in eng.discards) _cardWidget(c)],
+              ),
+            ],
           ],
         ),
       ),

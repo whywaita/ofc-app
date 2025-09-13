@@ -39,9 +39,16 @@ class CycleLogic {
   static bool canNext(PineappleEngine eng) {
     final last = lastDrawCount(eng.history);
     final ids = currentCycleIds(eng.history);
-    final placed = placedCountForCycle(eng.builder, ids);
-    if (last == 5) return placed >= 5;
-    if (last == 3) return placed >= 2;
+    final placedOnBoard = placedCountForCycle(eng.builder, ids);
+    final trayLeft = trayCardsForCycle(eng.tray, ids).length;
+    if (last == 5) {
+      // initial cycle: all 5 must be on board and none in tray
+      return placedOnBoard == 5 && trayLeft == 0;
+    }
+    if (last == 3) {
+      // 3-card cycle: at least 2 on board (the leftover 1 may be auto-discarded)
+      return placedOnBoard >= 2;
+    }
     return false;
   }
 
@@ -53,9 +60,9 @@ class CycleLogic {
     final leftovers = trayCardsForCycle(eng.tray, ids);
     for (final c in leftovers) {
       eng.tray.remove(c);
+      eng.discards.add(c);
       eng.history.add(ActionLogEntry('discard', {'card': c.toString()}));
     }
     return leftovers;
   }
 }
-

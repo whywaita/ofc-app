@@ -18,6 +18,7 @@ class PineappleEngine {
   final List<ActionLogEntry> history = [];
   final BoardBuilder builder = BoardBuilder();
   final List<PlayingCard> tray = [];
+  final List<PlayingCard> discards = [];
   Phase phase = Phase.drawing;
 
   int initialDrawCount = 5; // 通常 5、Fantasy では14/15/16/17
@@ -37,6 +38,7 @@ class PineappleEngine {
       throw StateError('Hand already in progress');
     }
     initialDrawCount = fantasyInitialCount > 0 ? fantasyInitialCount : 5;
+    discards.clear();
     _draw(initialDrawCount);
   }
 
@@ -71,6 +73,7 @@ class PineappleEngine {
   void discard(PlayingCard card) {
     if (phase != Phase.placing) throw StateError('Not in placing phase');
     if (!tray.remove(card)) throw StateError('Card not in tray');
+    discards.add(card);
     history.add(ActionLogEntry('discard', {'card': card.toString()}));
   }
 
