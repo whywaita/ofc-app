@@ -86,18 +86,15 @@ Future<int?> _chooseSeed(BuildContext context) async {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              RadioListTile<_SeedMode>(
-                title: const Text('Random'),
-                value: _SeedMode.random,
-                groupValue: mode,
-                onChanged: (v) => setState(() => mode = v!),
+              SegmentedButton<_SeedMode>(
+                segments: const [
+                  ButtonSegment<_SeedMode>(value: _SeedMode.random, label: Text('Random'), icon: Icon(Icons.shuffle)),
+                  ButtonSegment<_SeedMode>(value: _SeedMode.custom, label: Text('Specify'), icon: Icon(Icons.edit)),
+                ],
+                selected: {mode},
+                onSelectionChanged: (s) => setState(() => mode = s.first),
               ),
-              RadioListTile<_SeedMode>(
-                title: const Text('Specify'),
-                value: _SeedMode.custom,
-                groupValue: mode,
-                onChanged: (v) => setState(() => mode = v!),
-              ),
+              const SizedBox(height: 12),
               TextField(
                 controller: controller,
                 enabled: mode == _SeedMode.custom,
