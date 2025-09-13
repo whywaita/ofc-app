@@ -1,0 +1,351 @@
+import 'package:flutter/material.dart';
+import 'package:ofc_app_core/core/models/deck.dart';
+import 'package:ofc_app_core/core/models/playing_card.dart';
+import 'package:ofc_app_core/features/game/domain/board.dart';
+import 'package:ofc_app_core/features/game/domain/fantasy_engine.dart';
+import 'package:ofc_app_core/features/game/domain/ruleset.dart';
+import 'result_screen.dart';
+import 'package:ofc_app_core/features/game/domain/cycle_logic.dart';
+import 'package:ofc_app_core/features/game/domain/pineapple_engine.dart';
+
+class GameScreen extends StatefulWidget {
+  const GameScreen({super.key});
+
+  @override
+  State<GameScreen> createState() => _GameScreenState();
+}
+
+class _GameScreenState extends State<GameScreen> {
+  PineappleEngine? _eng;
+  String _status = 'Ready';
+  FantasyState _fantasy = const FantasyState.inactive();
+  final Ruleset _ruleset = Ruleset.defaultRules;
+  Set<String> _movableIds = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    // 画面表示と同時に自動で配る
+    WidgetsBinding.instance.addPostFrameCallback((_) => _deal());
+  }
+
+  void _deal() {
+    setState(() {
+      _eng = PineappleEngine(Deck.standard(seed: 42))
+        ..startHand(fantasyInitialCount: _fantasy.active ? _fantasy.initialCount : 0);
+      _status = 'Dealt ${_fantasy.active ? _fantasy.initialCount : 5}';
+    });
+  }
+
+  String _rankSymbol(PlayingCard c) {
+    switch (c.rank.name) {
+      case 'ace':
+        return 'A';
+      case 'king':
+        return 'K';
+      case 'queen':
+        return 'Q';
+      case 'jack':
+        return 'J';
+      case 'ten':
+        return 'T';
+      default:
+        return c.rank.value.toString();
+    }
+  }
+
+  String _suitEmoji(PlayingCard c) {
+    switch (c.suit.name) {
+      case 'hearts':
+        return '♥️';
+      case 'diamonds':
+        return '♦️';
+      case 'spades':
+        return '♠️';
+      default:
+        return '♣️';
+    }
+  }
+
+  bool _isRed(PlayingCard c) => c.suit.name == 'hearts' || c.suit.name == 'diamonds';
+
+  Widget _cardWidget(PlayingCard c, {bool large = false, Color? borderColor}) {
+    final txt = '${_rankSymbol(c)}${_suitEmoji(c)}';
+    final color = _isRed(c) ? Colors.red : Colors.black87;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: borderColor ?? Colors.grey.shade400),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 2, offset: const Offset(0, 1)),
+        ],
+      ),
+      child: Text(txt, style: TextStyle(fontSize: large ? 22 : 18, color: color, fontWeight: FontWeight.w600)),
+    );
+  }
+
+  Set<String> _currentCycleIds() {
+    final eng = _eng;
+    if (eng == null) return const {};
+    for (var i = eng.history.length - 1; i >= 0; i--) {
+      final e = eng.history[i];
+      if (e.type == 'draw') {
+        final list = (e.data['cards'] as List).cast<String>();
+        return list.toSet();
+      }
+    }
+    return const {};
+  }
+
+  void _sortTray() {
+    final eng = _eng;
+    if (eng == null) return;
+    setState(() {
+      eng.tray.sort((a, b) {
+        final rv = b.rank.value.compareTo(a.rank.value); // 高いランク優先
+        if (rv != 0) return rv;
+        int suitOrder(String s) => switch (s) {
+              'spades' => 3,
+              'hearts' => 2,
+              'diamonds' => 1,
+              _ => 0, // clubs
+            };
+        return suitOrder(b.suit.name) - suitOrder(a.suit.name);
+      });
+      _status = 'Sorted';
+    });
+  }
+
+  int _lastDrawCount() => CycleLogic.lastDrawCount(_eng!.history);
+  int _placedCountForCycle(Set<String> ids) => CycleLogic.placedCountForCycle(_eng!.builder, ids);
+  List<PlayingCard> _trayCardsForCycle(Set<String> ids) => CycleLogic.trayCardsForCycle(_eng!.tray, ids);
+
+  Widget _dropZone({required String title, required List<PlayingCard> current, required int max, required Slot slot}) {
+    return DragTarget<PlayingCard>(
+      onWillAcceptWithDetails: (details) {
+        final eng = _eng;
+        if (eng == null || eng.phase != Phase.placing) return false;
+        if (current.length >= max) return false;
+        final lastCount = _lastDrawCount();
+        if (lastCount == 3 && eng.tray.contains(details.data)) {
+          final ids = _currentCycleIds();
+          final placed = _placedCountForCycle(ids);
+          if (placed >= 2) return false;
+        }
+        return true;
+      },
+      onAcceptWithDetails: (details) => setState(() {
+        final eng = _eng!;
+        final c = details.data;
+        if (eng.tray.contains(c)) {
+          eng.place(slot, c);
+        } else {
+          eng.builder.top.remove(c);
+          eng.builder.middle.remove(c);
+          eng.builder.bottom.remove(c);
+          switch (slot) {
+            case Slot.top:
+              eng.builder.top.add(c);
+              break;
+            case Slot.middle:
+              eng.builder.middle.add(c);
+              break;
+            case Slot.bottom:
+              eng.builder.bottom.add(c);
+              break;
+          }
+        }
+        _status = 'Placed';
+      }),
+      builder: (context, candidate, rejected) {
+        final highlight = candidate.isNotEmpty;
+        return Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            border: Border.all(color: highlight ? Colors.teal : Colors.grey.shade400),
+            borderRadius: BorderRadius.circular(10),
+            color: highlight ? Colors.teal.withValues(alpha: 0.06) : null,
+          ),
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final c in current)
+                if (_movableIds.contains(c.toString()))
+                  Draggable<PlayingCard>(
+                    data: c,
+                    feedback: Material(color: Colors.transparent, child: _cardWidget(c, large: true, borderColor: Colors.teal)),
+                    childWhenDragging: Opacity(opacity: 0.3, child: _cardWidget(c, borderColor: Colors.teal)),
+                    child: _cardWidget(c, borderColor: Colors.teal),
+                  )
+                else
+                  _cardWidget(c, borderColor: Colors.grey.shade500),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final eng = _eng;
+    final tray = eng?.tray ?? const <PlayingCard>[];
+    final top = eng?.builder.top ?? const <PlayingCard>[];
+    final middle = eng?.builder.middle ?? const <PlayingCard>[];
+    final bottom = eng?.builder.bottom ?? const <PlayingCard>[];
+    // Next 3 可否: 初手5は5枚配置、以降は2枚配置
+    bool canNext;
+    if (eng == null) {
+      canNext = false;
+    } else {
+      final lastCount = _lastDrawCount();
+      final ids = _currentCycleIds();
+      final placed = _placedCountForCycle(ids);
+      if (lastCount == 5) {
+        canNext = placed >= 5;
+      } else if (lastCount == 3) {
+        canNext = placed >= 2;
+      } else {
+        canNext = false;
+      }
+    }
+    // Commit判定は下部の主ボタンで直接確認するため未使用
+    _movableIds = _currentCycleIds();
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Practice')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 12),
+            Text('Status: $_status'),
+            const SizedBox(height: 8),
+            const Divider(),
+            _dropZone(title: 'Top', current: top, max: 3, slot: Slot.top),
+            const SizedBox(height: 8),
+            _dropZone(title: 'Middle', current: middle, max: 5, slot: Slot.middle),
+            const SizedBox(height: 8),
+            _dropZone(title: 'Bottom', current: bottom, max: 5, slot: Slot.bottom),
+            const Divider(),
+            DragTarget<PlayingCard>(
+              onWillAcceptWithDetails: (details) {
+                final eng2 = _eng;
+                if (eng2 == null) return false;
+                if (eng2.tray.contains(details.data)) return false; // 既にTray
+                if (eng2.phase != Phase.placing) return false;
+                // 今サイクルのカードのみTrayに戻せる
+                final ids = _currentCycleIds();
+                return ids.contains(details.data.toString());
+              },
+              onAcceptWithDetails: (details) => setState(() {
+                final eng2 = _eng!;
+                // 配置済み から外して Tray へ戻す
+                eng2.builder.top.remove(details.data);
+                eng2.builder.middle.remove(details.data);
+                eng2.builder.bottom.remove(details.data);
+                eng2.tray.add(details.data);
+                _status = 'Back to Tray';
+              }),
+              builder: (context, cand, rej) => Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  border: Border.all(color: cand.isNotEmpty ? Colors.blue : Colors.transparent),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Tray (${tray.length})', textAlign: TextAlign.center),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final c in tray)
+                          Draggable<PlayingCard>(
+                            data: c,
+                            feedback: Material(color: Colors.transparent, child: _cardWidget(c, large: true)),
+                            childWhenDragging: Opacity(opacity: 0.3, child: _cardWidget(c)),
+                            child: _cardWidget(c),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                if (eng != null && eng.initialDrawCount > 5)
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: tray.length >= 2 ? _sortTray : null,
+                      child: const Text('Sort'),
+                    ),
+                  ),
+                if (eng != null && eng.initialDrawCount > 5)
+                  const SizedBox(width: 0),
+                Expanded(
+                  child: Builder(builder: (context) {
+                    final isFinal = eng?.builder.isComplete == true;
+                    final label = isFinal ? 'Commit' : 'Next 3';
+                    final enabled = eng != null && (isFinal ? true : canNext);
+                    return ElevatedButton(
+                      onPressed: !enabled
+                          ? null
+                          : () async {
+                              if (isFinal) {
+                                final b = _eng!.finalize();
+                                final e = BoardEval.from(b);
+                                final next = FantasyEngine.nextState(_fantasy, e);
+                              final nextInit = await Navigator.of(context).push<int>(
+                                MaterialPageRoute(
+                                  builder: (_) => ResultScreen(board: b, nextFantasy: next, ruleset: _ruleset, history: List.of(_eng!.history)),
+                                ),
+                              );
+                                setState(() {
+                                  _fantasy = next;
+                                  _eng = null;
+                                  _status = 'Ready';
+                                });
+                                if (nextInit != null) {
+                                  _deal();
+                                }
+                              } else {
+                                setState(() {
+                                  final eng2 = _eng!;
+                                  final lastCount = _lastDrawCount();
+                                  final ids = _currentCycleIds();
+                                  if (lastCount == 3) {
+                                    final leftovers = _trayCardsForCycle(ids);
+                                    for (final c in leftovers) {
+                                      eng2.tray.remove(c);
+                                      eng2.history.add(
+                                        ActionLogEntry('discard', {'card': c.toString()}),
+                                      );
+                                    }
+                                  }
+                                  eng2.nextCycle();
+                                  _status = 'Drew 3';
+                                });
+                              }
+                            },
+                      child: Text(label),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
