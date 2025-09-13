@@ -1,6 +1,14 @@
 # Open Face Chinese Poker (OFCP) — Flutter/Dart
 
-A cross‑platform implementation of Open Face Chinese Poker (Pineapple variant) built with Flutter (app) and pure Dart (domain). This repository contains the scoring rules, foul detection, Fantasy mode logic, and a minimal playable UI for:
+<p align="center">
+  <img src="app/assets/icon/icon-1024.png" alt="ofc-app Logo" width="200">
+</p>
+
+<p align="center">
+  A cross‑platform implementation of Open Face Chinese Poker (Pineapple variant) built with Flutter (app) and pure Dart (domain). 
+</p>
+
+This repository contains the scoring rules, foul detection, Fantasy mode logic, and a minimal playable UI for:
 
 - Practice (single player)
 - Pass & Play (A/B hot‑seat)
