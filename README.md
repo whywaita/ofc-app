@@ -70,12 +70,12 @@ On iOS devices, enable automatic signing in Xcode:
 - Pass & Play: A gets 5 → B gets 5 → A Next 3 → B Next 3 (alternating). If one player is in Fantasy, three‑card deals are skipped for that player.
 - Result: shows both final boards, FOUL/OK, royalties, totals, and the intra‑hand action log.
 
-### Practice のシード選択（練習用の再現性）
-- トップ画面で「Practice」を押すと、開始前にシード選択モーダルが表示されます。
-  - 「ランダム」: 端末時刻由来の整数シードを自動採用。
-  - 「指定する」: 任意の整数シードを入力して固定化（同じシードで同じ配札順）。
-- 画面上部および結果画面に `Seed: <数値>` を表示します。シードを共有すると、同じ練習手順を他端末でも再現可能です。
-- セッション中は同一シードを維持します。ハンドごとに変えたい場合は、要件に応じて切替UIの追加をご検討ください。
+### Practice Seed Selection (Reproducible Training)
+- When you tap “Practice” on the home screen, a seed‑selection dialog appears before starting.
+  - “Random”: automatically generates an integer seed from the current time.
+  - “Specify”: enter any integer seed to make deals deterministic (same seed → same deck order).
+- `Seed: <number>` is shown at the top of the game screen and on the result screen. Share the seed to reproduce the same practice sequence on other devices.
+- The same seed is kept for the entire session. If you prefer per‑hand seed changes, consider adding a small in‑app toggle.
 
 ## Testing
 - Domain tests (pure Dart): `dart test -r expanded`
