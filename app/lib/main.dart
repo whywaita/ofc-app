@@ -82,18 +82,18 @@ Future<int?> _chooseSeed(BuildContext context) async {
       return StatefulBuilder(builder: (ctx, setState) {
         final customValid = int.tryParse(controller.text.trim()) != null;
         return AlertDialog(
-          title: const Text('Practice シードを選択'),
+          title: const Text('Choose Practice Seed'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               RadioListTile<_SeedMode>(
-                title: const Text('ランダム'),
+                title: const Text('Random'),
                 value: _SeedMode.random,
                 groupValue: mode,
                 onChanged: (v) => setState(() => mode = v!),
               ),
               RadioListTile<_SeedMode>(
-                title: const Text('指定する'),
+                title: const Text('Specify'),
                 value: _SeedMode.custom,
                 groupValue: mode,
                 onChanged: (v) => setState(() => mode = v!),
@@ -102,9 +102,7 @@ Future<int?> _chooseSeed(BuildContext context) async {
                 controller: controller,
                 enabled: mode == _SeedMode.custom,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'シード (整数)',
-                ),
+                decoration: const InputDecoration(labelText: 'Seed (integer)'),
                 onChanged: (_) => setState(() {}),
               ),
               if (mode == _SeedMode.custom && controller.text.isNotEmpty && !customValid)
@@ -112,7 +110,7 @@ Future<int?> _chooseSeed(BuildContext context) async {
                   padding: EdgeInsets.only(top: 8.0),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('整数で入力してください', style: TextStyle(color: Colors.red)),
+                    child: Text('Enter a valid integer', style: TextStyle(color: Colors.red)),
                   ),
                 ),
             ],
@@ -120,7 +118,7 @@ Future<int?> _chooseSeed(BuildContext context) async {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(null),
-              child: const Text('キャンセル'),
+              child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: mode == _SeedMode.custom && !customValid
@@ -135,7 +133,7 @@ Future<int?> _chooseSeed(BuildContext context) async {
                         }
                       }
                     },
-              child: const Text('開始'),
+              child: const Text('Start'),
             ),
           ],
         );

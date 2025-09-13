@@ -6,8 +6,8 @@ void main() {
     await tester.pumpWidget(const OfcApp());
     await tester.tap(find.text('Practice'));
     await tester.pumpAndSettle();
-    // モーダルでデフォルト（ランダム）開始を選ぶ
-    await tester.tap(find.text('開始'));
+    // Modal: choose default (Random) and start
+    await tester.tap(find.text('Start'));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Status:'), findsOneWidget);

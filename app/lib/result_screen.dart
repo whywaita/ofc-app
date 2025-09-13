@@ -121,7 +121,7 @@ class ResultScreen extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Seedをコピー',
+                  tooltip: 'Copy seed',
                   icon: const Icon(Icons.copy_outlined, size: 18),
                   onPressed: () async {
                     await Clipboard.setData(ClipboardData(text: seed.toString()));
