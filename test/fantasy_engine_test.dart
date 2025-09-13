@@ -7,9 +7,9 @@ void main() {
   test('enter then continue with same initialCount on bottom Four+', () {
     // 突入（Top QQ → 14）
     final b1 = Board(
-      top: [c('Qh'), c('Qs'), c('2c')], // Pair Q
-      middle: [c('Kd'), c('Ks'), c('7h'), c('5c'), c('3d')], // Pair K (>= Top)
-      bottom: [c('Td'), c('9s'), c('9h'), c('6c'), c('Tc')], // Two Pair (>= Middle)
+      top: [c('Qh'), c('Qs'), c('2c')], // Pair Q (entry)
+      middle: [c('2d'), c('6d'), c('8d'), c('9d'), c('Td')], // Flush
+      bottom: [c('9s'), c('9d'), c('9h'), c('9c'), c('2s')], // Four of a kind (>= Flush)
     );
     final e1 = BoardEval.from(b1);
     final enter = FantasyState.inactive();
@@ -19,9 +19,9 @@ void main() {
 
     // 継続（下段 Four of a Kind）→ 配布枚数は 14 を維持
     final b2 = Board(
-      top: [c('2h'), c('3h'), c('4h')],
-      middle: [c('5h'), c('6h'), c('7h'), c('8h'), c('9h')],
-      bottom: [c('9s'), c('9d'), c('9c'), c('9h'), c('2s')],
+      top: [c('2h'), c('3h'), c('4h')], // High
+      middle: [c('2h'), c('6h'), c('8h'), c('9h'), c('Th')], // Flush (not straight flush)
+      bottom: [c('9s'), c('9d'), c('9c'), c('9h'), c('2s')], // Four
     );
     final e2 = BoardEval.from(b2);
     final st2 = FantasyEngine.nextState(st1, e2);

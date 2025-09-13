@@ -30,9 +30,9 @@ void main() {
     final gs = GameState(fantasyA: const FantasyState.active(15));
     // A は継続条件（下段Four）を満たす → initialCount=15を維持
     final a = Board(
-      top: [c('2h'), c('3h'), c('4h')],
-      middle: [c('5h'), c('6h'), c('7h'), c('8h'), c('9h')],
-      bottom: [c('9s'), c('9d'), c('9c'), c('9h'), c('2s')],
+      top: [c('2h'), c('3h'), c('4h')], // High
+      middle: [c('2d'), c('6d'), c('8d'), c('9d'), c('Td')], // Flush
+      bottom: [c('9s'), c('9d'), c('9c'), c('9h'), c('2s')], // Four of a kind
     );
     // B は継続/突入なし
     final b = Board(
