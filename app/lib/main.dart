@@ -30,23 +30,30 @@ class HomePage extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const GameScreen()),
-                );
-              },
-              child: const Text('Practice'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const GameScreen()),
+                  );
+                },
+                child: const Text('Practice'),
+              ),
             ),
             const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const PassPlayScreen()),
-                );
-              },
-              child: const Text('Pass & Play (A/B)'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const PassPlayScreen()),
+                  );
+                },
+                child: const Text('Pass & Play (A/B)'),
+              ),
             ),
           ],
         ),
