@@ -15,6 +15,10 @@ This repository contains the scoring rules, foul detection, Fantasy mode logic, 
 
 The codebase emphasizes testable, pure‑Dart domain logic and a thin UI layer.
 
+<p align="center">
+  <img src="docs/assets/play-practice.gif" alt="ofc-app Practice">
+</p>
+
 ## Features
 - Domain
   - Hand evaluation (5‑card, 3‑card), score engine, royalties, strict foul detection
