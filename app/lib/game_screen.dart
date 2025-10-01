@@ -70,20 +70,31 @@ class _GameScreenState extends State<GameScreen> {
 
   bool _isRed(PlayingCard c) => c.suit.name == 'hearts' || c.suit.name == 'diamonds';
 
-  Widget _cardWidget(PlayingCard c, {bool large = false, Color? borderColor}) {
+  Widget _cardWidget(PlayingCard c, {bool large = false, Color? borderColor, bool isSmallScreen = false}) {
     final txt = '${_rankSymbol(c)}${_suitEmoji(c)}';
     final color = _isRed(c) ? Colors.red : Colors.black87;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: isSmallScreen ? 6 : 10,
+        vertical: isSmallScreen ? 4 : 8,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(isSmallScreen ? 6 : 8),
         border: Border.all(color: borderColor ?? Colors.grey.shade400),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 2, offset: const Offset(0, 1)),
         ],
       ),
-      child: Text(txt, style: TextStyle(fontSize: large ? 22 : 18, color: color, fontWeight: FontWeight.w600)),
+      child: Text(
+        txt,
+        style: TextStyle(
+          fontSize: large ? (isSmallScreen ? 18 : 22) : (isSmallScreen ? 14 : 18),
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 
@@ -125,6 +136,9 @@ class _GameScreenState extends State<GameScreen> {
   // List<PlayingCard> _trayCardsForCycle(Set<String> ids) => CycleLogic.trayCardsForCycle(_eng!.tray, ids);
 
   Widget _dropZone({required String title, required List<PlayingCard> current, required int max, required Slot slot}) {
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 600;
+
     return DragTarget<PlayingCard>(
       onWillAcceptWithDetails: (details) {
         final eng = _eng;
@@ -164,27 +178,40 @@ class _GameScreenState extends State<GameScreen> {
       builder: (context, candidate, rejected) {
         final highlight = candidate.isNotEmpty;
         return Container(
-          padding: const EdgeInsets.all(10),
+          padding: EdgeInsets.all(isSmallScreen ? 6 : 10),
           decoration: BoxDecoration(
             border: Border.all(color: highlight ? Colors.teal : Colors.grey.shade400),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(isSmallScreen ? 6 : 10),
             color: highlight ? Colors.teal.withValues(alpha: 0.06) : null,
           ),
-          child: Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 6,
-            runSpacing: 6,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final c in current)
-                if (_movableIds.contains(c.toString()))
-                  Draggable<PlayingCard>(
-                    data: c,
-                    feedback: Material(color: Colors.transparent, child: _cardWidget(c, large: true, borderColor: Colors.teal)),
-                    childWhenDragging: Opacity(opacity: 0.3, child: _cardWidget(c, borderColor: Colors.teal)),
-                    child: _cardWidget(c, borderColor: Colors.teal),
-                  )
-                else
-                  _cardWidget(c, borderColor: Colors.grey.shade500),
+              Text(
+                '$title ($max max)',
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 12 : 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Wrap(
+                alignment: WrapAlignment.start,
+                spacing: isSmallScreen ? 4 : 6,
+                runSpacing: isSmallScreen ? 4 : 6,
+                children: [
+                  for (final c in current)
+                    if (_movableIds.contains(c.toString()))
+                      Draggable<PlayingCard>(
+                        data: c,
+                        feedback: Material(color: Colors.transparent, child: _cardWidget(c, large: true, borderColor: Colors.teal, isSmallScreen: isSmallScreen)),
+                        childWhenDragging: Opacity(opacity: 0.3, child: _cardWidget(c, borderColor: Colors.teal, isSmallScreen: isSmallScreen)),
+                        child: _cardWidget(c, borderColor: Colors.teal, isSmallScreen: isSmallScreen),
+                      )
+                    else
+                      _cardWidget(c, borderColor: Colors.grey.shade500, isSmallScreen: isSmallScreen),
+                ],
+              ),
             ],
           ),
         );
@@ -204,10 +231,18 @@ class _GameScreenState extends State<GameScreen> {
     // Commit判定は下部の主ボタンで直接確認するため未使用
     _movableIds = _currentCycleIds();
 
+    // スマートフォン対応
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 600;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Practice')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      appBar: AppBar(
+        title: const Text('Practice'),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(isSmallScreen ? 8 : 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -221,9 +256,9 @@ class _GameScreenState extends State<GameScreen> {
             const SizedBox(height: 8),
             const Divider(),
             _dropZone(title: 'Top', current: top, max: 3, slot: Slot.top),
-            const SizedBox(height: 8),
+            SizedBox(height: isSmallScreen ? 4 : 8),
             _dropZone(title: 'Middle', current: middle, max: 5, slot: Slot.middle),
-            const SizedBox(height: 8),
+            SizedBox(height: isSmallScreen ? 4 : 8),
             _dropZone(title: 'Bottom', current: bottom, max: 5, slot: Slot.bottom),
             const Divider(),
             DragTarget<PlayingCard>(
@@ -263,9 +298,9 @@ class _GameScreenState extends State<GameScreen> {
                         for (final c in tray)
                           Draggable<PlayingCard>(
                             data: c,
-                            feedback: Material(color: Colors.transparent, child: _cardWidget(c, large: true)),
-                            childWhenDragging: Opacity(opacity: 0.3, child: _cardWidget(c)),
-                            child: _cardWidget(c),
+                            feedback: Material(color: Colors.transparent, child: _cardWidget(c, large: true, isSmallScreen: isSmallScreen)),
+                            childWhenDragging: Opacity(opacity: 0.3, child: _cardWidget(c, isSmallScreen: isSmallScreen)),
+                            child: _cardWidget(c, isSmallScreen: isSmallScreen),
                           ),
                       ],
                     ),
@@ -334,10 +369,11 @@ class _GameScreenState extends State<GameScreen> {
                 alignment: WrapAlignment.center,
                 spacing: 6,
                 runSpacing: 6,
-                children: [for (final c in eng.discards) _cardWidget(c)],
+                children: [for (final c in eng.discards) _cardWidget(c, isSmallScreen: isSmallScreen)],
               ),
             ],
           ],
+        ),
         ),
       ),
     );
