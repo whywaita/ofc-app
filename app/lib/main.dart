@@ -15,7 +15,7 @@ class OfcApp extends StatelessWidget {
       title: 'OFCP',
       theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.teal),
       home: const HomePage(),
-      // Web向けにレスポンシブデザインを最適化
+      // Optimize responsive design for web
       debugShowCheckedModeBanner: false,
     );
   }
@@ -26,7 +26,7 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // スクリーンサイズを取得
+    // Get screen size for responsive layout
     final screenSize = MediaQuery.of(context).size;
     final isSmallScreen = screenSize.width < 600;
 
@@ -48,7 +48,7 @@ class HomePage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ロゴエリア
+              // Logo area
               Icon(
                 Icons.casino,
                 size: isSmallScreen ? 80 : 100,
@@ -59,19 +59,19 @@ class HomePage extends StatelessWidget {
                 'Open Face Chinese Poker',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontSize: isSmallScreen ? 20 : 24,
-                ),
+                      fontSize: isSmallScreen ? 20 : 24,
+                    ),
               ),
               const SizedBox(height: 48),
-              // ボタンエリア
+              // Button area
               SizedBox(
                 height: isSmallScreen ? 50 : 56,
                 child: ElevatedButton(
                   onPressed: () async {
                     final seed = await _chooseSeed(context);
-                    if (seed == null) return; // キャンセル
-                    // 選択したシードでPracticeを開始
-                    // シードはGameScreenへ渡し、画面内/結果画面で表示する
+                    if (seed == null) return; // Canceled
+                    // Start practice with the selected seed
+                    // The seed is passed to GameScreen and displayed on the screen/result screen
                     // ignore: use_build_context_synchronously
                     Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => GameScreen(seed: seed)),
@@ -125,7 +125,7 @@ Future<int?> _chooseSeed(BuildContext context) async {
 
   int genRandomSeed() => DateTime.now().microsecondsSinceEpoch & 0x7FFFFFFF;
 
-  // スマートフォン向けにダイアログサイズを調整
+  // Adjust dialog size for mobile devices
   final screenSize = MediaQuery.of(context).size;
   final isSmallScreen = screenSize.width < 600;
 
@@ -153,8 +153,14 @@ Future<int?> _chooseSeed(BuildContext context) async {
               children: [
                 SegmentedButton<_SeedMode>(
                   segments: const [
-                    ButtonSegment<_SeedMode>(value: _SeedMode.random, label: Text('Random'), icon: Icon(Icons.shuffle)),
-                    ButtonSegment<_SeedMode>(value: _SeedMode.custom, label: Text('Specify'), icon: Icon(Icons.edit)),
+                    ButtonSegment<_SeedMode>(
+                        value: _SeedMode.random,
+                        label: Text('Random'),
+                        icon: Icon(Icons.shuffle)),
+                    ButtonSegment<_SeedMode>(
+                        value: _SeedMode.custom,
+                        label: Text('Specify'),
+                        icon: Icon(Icons.edit)),
                   ],
                   selected: {mode},
                   onSelectionChanged: (s) => setState(() => mode = s.first),
@@ -164,15 +170,19 @@ Future<int?> _chooseSeed(BuildContext context) async {
                   controller: controller,
                   enabled: mode == _SeedMode.custom,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Seed (integer)'),
+                  decoration:
+                      const InputDecoration(labelText: 'Seed (integer)'),
                   onChanged: (_) => setState(() {}),
                 ),
-                if (mode == _SeedMode.custom && controller.text.isNotEmpty && !customValid)
+                if (mode == _SeedMode.custom &&
+                    controller.text.isNotEmpty &&
+                    !customValid)
                   const Padding(
                     padding: EdgeInsets.only(top: 8.0),
                     child: Align(
                       alignment: Alignment.centerLeft,
-                      child: Text('Enter a valid integer', style: TextStyle(color: Colors.red)),
+                      child: Text('Enter a valid integer',
+                          style: TextStyle(color: Colors.red)),
                     ),
                   ),
               ],
