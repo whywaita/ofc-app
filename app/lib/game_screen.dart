@@ -294,8 +294,10 @@ class _GameScreenState extends State<GameScreen> {
                 onWillAcceptWithDetails: (details) {
                   final eng2 = _eng;
                   if (eng2 == null) return false;
-                  if (eng2.tray.contains(details.data))
-                    return false; // Already in Tray
+                  // Already in Tray
+                  if (eng2.tray.contains(details.data)) {
+                    return false;
+                  }
                   if (eng2.phase != Phase.placing) return false;
                   // Only cards from the current cycle can be returned to the Tray
                   final ids = _currentCycleIds();
