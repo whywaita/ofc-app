@@ -26,14 +26,15 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
-    // 画面表示と同時に自動で配る
+    // Automatically deal cards when the screen is displayed
     WidgetsBinding.instance.addPostFrameCallback((_) => _deal());
   }
 
   void _deal() {
     setState(() {
       _eng = PineappleEngine(Deck.standard(seed: widget.seed))
-        ..startHand(fantasyInitialCount: _fantasy.active ? _fantasy.initialCount : 0);
+        ..startHand(
+            fantasyInitialCount: _fantasy.active ? _fantasy.initialCount : 0);
       _status = 'Dealt ${_fantasy.active ? _fantasy.initialCount : 5}';
     });
   }
@@ -68,22 +69,39 @@ class _GameScreenState extends State<GameScreen> {
     }
   }
 
-  bool _isRed(PlayingCard c) => c.suit.name == 'hearts' || c.suit.name == 'diamonds';
+  bool _isRed(PlayingCard c) =>
+      c.suit.name == 'hearts' || c.suit.name == 'diamonds';
 
-  Widget _cardWidget(PlayingCard c, {bool large = false, Color? borderColor}) {
+  Widget _cardWidget(PlayingCard c,
+      {bool large = false, Color? borderColor, bool isSmallScreen = false}) {
     final txt = '${_rankSymbol(c)}${_suitEmoji(c)}';
     final color = _isRed(c) ? Colors.red : Colors.black87;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: isSmallScreen ? 6 : 10,
+        vertical: isSmallScreen ? 4 : 8,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(isSmallScreen ? 6 : 8),
         border: Border.all(color: borderColor ?? Colors.grey.shade400),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 2, offset: const Offset(0, 1)),
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 2,
+              offset: const Offset(0, 1)),
         ],
       ),
-      child: Text(txt, style: TextStyle(fontSize: large ? 22 : 18, color: color, fontWeight: FontWeight.w600)),
+      child: Text(
+        txt,
+        style: TextStyle(
+          fontSize:
+              large ? (isSmallScreen ? 18 : 22) : (isSmallScreen ? 14 : 18),
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 
@@ -120,11 +138,19 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   int _lastDrawCount() => CycleLogic.lastDrawCount(_eng!.history);
-  int _placedCountForCycle(Set<String> ids) => CycleLogic.placedCountForCycle(_eng!.builder, ids);
+  int _placedCountForCycle(Set<String> ids) =>
+      CycleLogic.placedCountForCycle(_eng!.builder, ids);
   // kept for clarity but unused after unifying auto-discard via CycleLogic
   // List<PlayingCard> _trayCardsForCycle(Set<String> ids) => CycleLogic.trayCardsForCycle(_eng!.tray, ids);
 
-  Widget _dropZone({required String title, required List<PlayingCard> current, required int max, required Slot slot}) {
+  Widget _dropZone(
+      {required String title,
+      required List<PlayingCard> current,
+      required int max,
+      required Slot slot}) {
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 600;
+
     return DragTarget<PlayingCard>(
       onWillAcceptWithDetails: (details) {
         final eng = _eng;
@@ -164,27 +190,54 @@ class _GameScreenState extends State<GameScreen> {
       builder: (context, candidate, rejected) {
         final highlight = candidate.isNotEmpty;
         return Container(
-          padding: const EdgeInsets.all(10),
+          padding: EdgeInsets.all(isSmallScreen ? 6 : 10),
           decoration: BoxDecoration(
-            border: Border.all(color: highlight ? Colors.teal : Colors.grey.shade400),
-            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+                color: highlight ? Colors.teal : Colors.grey.shade400),
+            borderRadius: BorderRadius.circular(isSmallScreen ? 6 : 10),
             color: highlight ? Colors.teal.withValues(alpha: 0.06) : null,
           ),
-          child: Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 6,
-            runSpacing: 6,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final c in current)
-                if (_movableIds.contains(c.toString()))
-                  Draggable<PlayingCard>(
-                    data: c,
-                    feedback: Material(color: Colors.transparent, child: _cardWidget(c, large: true, borderColor: Colors.teal)),
-                    childWhenDragging: Opacity(opacity: 0.3, child: _cardWidget(c, borderColor: Colors.teal)),
-                    child: _cardWidget(c, borderColor: Colors.teal),
-                  )
-                else
-                  _cardWidget(c, borderColor: Colors.grey.shade500),
+              Text(
+                '$title ($max max)',
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 12 : 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Wrap(
+                alignment: WrapAlignment.start,
+                spacing: isSmallScreen ? 4 : 6,
+                runSpacing: isSmallScreen ? 4 : 6,
+                children: [
+                  for (final c in current)
+                    if (_movableIds.contains(c.toString()))
+                      Draggable<PlayingCard>(
+                        data: c,
+                        feedback: Material(
+                            color: Colors.transparent,
+                            child: _cardWidget(c,
+                                large: true,
+                                borderColor: Colors.teal,
+                                isSmallScreen: isSmallScreen)),
+                        childWhenDragging: Opacity(
+                            opacity: 0.3,
+                            child: _cardWidget(c,
+                                borderColor: Colors.teal,
+                                isSmallScreen: isSmallScreen)),
+                        child: _cardWidget(c,
+                            borderColor: Colors.teal,
+                            isSmallScreen: isSmallScreen),
+                      )
+                    else
+                      _cardWidget(c,
+                          borderColor: Colors.grey.shade500,
+                          isSmallScreen: isSmallScreen),
+                ],
+              ),
             ],
           ),
         );
@@ -201,143 +254,180 @@ class _GameScreenState extends State<GameScreen> {
     final bottom = eng?.builder.bottom ?? const <PlayingCard>[];
     // Next 3 可否: 初手5は5枚配置、以降は2枚配置
     final canNext = eng != null && CycleLogic.canNext(eng);
-    // Commit判定は下部の主ボタンで直接確認するため未使用
+    // Commit check is not used here as it is directly checked by the main button below
     _movableIds = _currentCycleIds();
 
+    // Responsive design for mobile devices
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 600;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Practice')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 12),
-            Text('Status: $_status'),
-            const SizedBox(height: 4),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: SelectableText('Seed: ${widget.seed}', style: const TextStyle(color: Colors.grey)),
-            ),
-            const SizedBox(height: 8),
-            const Divider(),
-            _dropZone(title: 'Top', current: top, max: 3, slot: Slot.top),
-            const SizedBox(height: 8),
-            _dropZone(title: 'Middle', current: middle, max: 5, slot: Slot.middle),
-            const SizedBox(height: 8),
-            _dropZone(title: 'Bottom', current: bottom, max: 5, slot: Slot.bottom),
-            const Divider(),
-            DragTarget<PlayingCard>(
-              onWillAcceptWithDetails: (details) {
-                final eng2 = _eng;
-                if (eng2 == null) return false;
-                if (eng2.tray.contains(details.data)) return false; // 既にTray
-                if (eng2.phase != Phase.placing) return false;
-                // 今サイクルのカードのみTrayに戻せる
-                final ids = _currentCycleIds();
-                return ids.contains(details.data.toString());
-              },
-              onAcceptWithDetails: (details) => setState(() {
-                final eng2 = _eng!;
-                // 配置済み から外して Tray へ戻す
-                eng2.builder.top.remove(details.data);
-                eng2.builder.middle.remove(details.data);
-                eng2.builder.bottom.remove(details.data);
-                eng2.tray.add(details.data);
-                _status = 'Back to Tray';
-              }),
-              builder: (context, cand, rej) => Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  border: Border.all(color: cand.isNotEmpty ? Colors.blue : Colors.transparent),
-                  borderRadius: BorderRadius.circular(10),
+      appBar: AppBar(
+        title: const Text('Practice'),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(isSmallScreen ? 8 : 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 12),
+              Text('Status: $_status'),
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: SelectableText('Seed: ${widget.seed}',
+                    style: const TextStyle(color: Colors.grey)),
+              ),
+              const SizedBox(height: 8),
+              const Divider(),
+              _dropZone(title: 'Top', current: top, max: 3, slot: Slot.top),
+              SizedBox(height: isSmallScreen ? 4 : 8),
+              _dropZone(
+                  title: 'Middle', current: middle, max: 5, slot: Slot.middle),
+              SizedBox(height: isSmallScreen ? 4 : 8),
+              _dropZone(
+                  title: 'Bottom', current: bottom, max: 5, slot: Slot.bottom),
+              const Divider(),
+              DragTarget<PlayingCard>(
+                onWillAcceptWithDetails: (details) {
+                  final eng2 = _eng;
+                  if (eng2 == null) return false;
+                  // Already in Tray
+                  if (eng2.tray.contains(details.data)) {
+                    return false;
+                  }
+                  if (eng2.phase != Phase.placing) return false;
+                  // Only cards from the current cycle can be returned to the Tray
+                  final ids = _currentCycleIds();
+                  return ids.contains(details.data.toString());
+                },
+                onAcceptWithDetails: (details) => setState(() {
+                  final eng2 = _eng!;
+                  // Remove from placed position and return to Tray
+                  eng2.builder.top.remove(details.data);
+                  eng2.builder.middle.remove(details.data);
+                  eng2.builder.bottom.remove(details.data);
+                  eng2.tray.add(details.data);
+                  _status = 'Back to Tray';
+                }),
+                builder: (context, cand, rej) => Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                        color:
+                            cand.isNotEmpty ? Colors.blue : Colors.transparent),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text('Tray (${tray.length})',
+                          textAlign: TextAlign.center),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          for (final c in tray)
+                            Draggable<PlayingCard>(
+                              data: c,
+                              feedback: Material(
+                                  color: Colors.transparent,
+                                  child: _cardWidget(c,
+                                      large: true,
+                                      isSmallScreen: isSmallScreen)),
+                              childWhenDragging: Opacity(
+                                  opacity: 0.3,
+                                  child: _cardWidget(c,
+                                      isSmallScreen: isSmallScreen)),
+                              child:
+                                  _cardWidget(c, isSmallScreen: isSmallScreen),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Tray (${tray.length})', textAlign: TextAlign.center),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        for (final c in tray)
-                          Draggable<PlayingCard>(
-                            data: c,
-                            feedback: Material(color: Colors.transparent, child: _cardWidget(c, large: true)),
-                            childWhenDragging: Opacity(opacity: 0.3, child: _cardWidget(c)),
-                            child: _cardWidget(c),
-                          ),
-                      ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  if (eng != null && eng.initialDrawCount > 5)
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: tray.length >= 2 ? _sortTray : null,
+                        child: const Text('Sort'),
+                      ),
                     ),
+                  if (eng != null && eng.initialDrawCount > 5)
+                    const SizedBox(width: 0),
+                  Expanded(
+                    child: Builder(builder: (context) {
+                      final isFinal = eng?.builder.isComplete == true;
+                      final label = isFinal ? 'Commit' : 'Next 3';
+                      final enabled = eng != null && (isFinal ? true : canNext);
+                      return ElevatedButton(
+                        onPressed: !enabled
+                            ? null
+                            : () async {
+                                if (isFinal) {
+                                  final b = _eng!.finalize();
+                                  final e = BoardEval.from(b);
+                                  final next =
+                                      FantasyEngine.nextState(_fantasy, e);
+                                  final nextInit =
+                                      await Navigator.of(context).push<int>(
+                                    MaterialPageRoute(
+                                      builder: (_) => ResultScreen(
+                                          board: b,
+                                          nextFantasy: next,
+                                          ruleset: _ruleset,
+                                          seed: widget.seed,
+                                          history: List.of(_eng!.history)),
+                                    ),
+                                  );
+                                  setState(() {
+                                    _fantasy = next;
+                                    _eng = null;
+                                    _status = 'Ready';
+                                  });
+                                  if (nextInit != null) {
+                                    _deal();
+                                  }
+                                } else {
+                                  setState(() {
+                                    final eng2 = _eng!;
+                                    CycleLogic.autoDiscardForNext(eng2);
+                                    eng2.nextCycle();
+                                    _status = 'Drew 3';
+                                  });
+                                }
+                              },
+                        child: Text(label),
+                      );
+                    }),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (eng != null && eng.discards.isNotEmpty) ...[
+                Text('Discarded (${eng.discards.length})',
+                    textAlign: TextAlign.center),
+                const SizedBox(height: 6),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final c in eng.discards)
+                      _cardWidget(c, isSmallScreen: isSmallScreen)
                   ],
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                if (eng != null && eng.initialDrawCount > 5)
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: tray.length >= 2 ? _sortTray : null,
-                      child: const Text('Sort'),
-                    ),
-                  ),
-                if (eng != null && eng.initialDrawCount > 5)
-                  const SizedBox(width: 0),
-                Expanded(
-                  child: Builder(builder: (context) {
-                    final isFinal = eng?.builder.isComplete == true;
-                    final label = isFinal ? 'Commit' : 'Next 3';
-                    final enabled = eng != null && (isFinal ? true : canNext);
-                    return ElevatedButton(
-                      onPressed: !enabled
-                          ? null
-                          : () async {
-                              if (isFinal) {
-                                final b = _eng!.finalize();
-                                final e = BoardEval.from(b);
-                                final next = FantasyEngine.nextState(_fantasy, e);
-                              final nextInit = await Navigator.of(context).push<int>(
-                                MaterialPageRoute(
-                                  builder: (_) => ResultScreen(board: b, nextFantasy: next, ruleset: _ruleset, seed: widget.seed, history: List.of(_eng!.history)),
-                                ),
-                              );
-                                setState(() {
-                                  _fantasy = next;
-                                  _eng = null;
-                                  _status = 'Ready';
-                                });
-                                if (nextInit != null) {
-                                  _deal();
-                                }
-                              } else {
-                                setState(() {
-                                  final eng2 = _eng!;
-                                  CycleLogic.autoDiscardForNext(eng2);
-                                  eng2.nextCycle();
-                                  _status = 'Drew 3';
-                                });
-                              }
-                            },
-                      child: Text(label),
-                    );
-                  }),
-                ),
               ],
-            ),
-            const SizedBox(height: 8),
-            if (eng != null && eng.discards.isNotEmpty) ...[
-              Text('Discarded (${eng.discards.length})', textAlign: TextAlign.center),
-              const SizedBox(height: 6),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 6,
-                runSpacing: 6,
-                children: [for (final c in eng.discards) _cardWidget(c)],
-              ),
             ],
-          ],
+          ),
         ),
       ),
     );
