@@ -1,0 +1,67 @@
+name: Cleanup PR Preview
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  deployments: write
+  pull-requests: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Delete deployment environment
+        id: delete-env
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const environmentName = `pr-preview-${prNumber}`;
+
+            let deleted = false;
+            try {
+              // 環境の削除を試みる
+              await github.rest.repos.deleteAnEnvironment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                environment_name: environmentName
+              });
+
+              console.log(`Deleted environment: ${environmentName}`);
+              deleted = true;
+            } catch (error) {
+              // 環境が存在しない場合はエラーを無視
+              if (error.status !== 404) {
+                console.error(`Error deleting environment: ${error.message}`);
+              } else {
+                console.log(`Environment ${environmentName} not found or already deleted`);
+              }
+            }
+
+            core.setOutput('deleted', deleted);
+            return deleted;
+
+      - name: Comment on PR about cleanup
+        if: steps.delete-env.outputs.deleted == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const isMerged = context.payload.pull_request.merged;
+
+            const emoji = isMerged ? '🎉' : '👋';
+            const message = isMerged ? 'Thank you for your contribution!' : 'Thank you for your interest!';
+
+            const commentBody = `## 🧹 Preview Environment Cleaned Up\n\n` +
+              `The preview environment for PR #${prNumber} has been removed.\n\n` +
+              `${message} ${emoji}`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: commentBody
+            });
