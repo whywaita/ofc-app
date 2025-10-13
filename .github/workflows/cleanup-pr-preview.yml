@@ -1,39 +1,71 @@
-name: Cleanup PR Preview
+name: PR Preview Cleanup
 
 on:
   pull_request:
     types: [closed]
 
 permissions:
-  deployments: write
+  contents: write
   pull-requests: write
+  deployments: write
 
 jobs:
   cleanup:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+        continue-on-error: true
+
+      - name: Remove PR preview directory
+        id: cleanup
+        run: |
+          PR_DIR="pr-${{ github.event.pull_request.number }}"
+
+          # gh-pagesブランチが存在しない場合はスキップ
+          if [ ! -d ".git" ]; then
+            echo "gh-pages branch does not exist, skipping cleanup"
+            echo "cleaned=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # PRプレビューディレクトリが存在する場合のみ削除
+          if [ -d "$PR_DIR" ]; then
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+            rm -rf $PR_DIR
+            git add .
+            git commit -m "Remove PR #${{ github.event.pull_request.number }} preview after PR close"
+            git push origin gh-pages
+
+            echo "cleaned=true" >> $GITHUB_OUTPUT
+            echo "Preview directory removed for PR #${{ github.event.pull_request.number }}"
+          else
+            echo "No preview directory found for PR #${{ github.event.pull_request.number }}"
+            echo "cleaned=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Delete deployment environment
-        id: delete-env
         uses: actions/github-script@v7
+        continue-on-error: true
         with:
           script: |
             const prNumber = context.payload.pull_request.number;
             const environmentName = `pr-preview-${prNumber}`;
 
-            let deleted = false;
             try {
-              // 環境の削除を試みる
               await github.rest.repos.deleteAnEnvironment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 environment_name: environmentName
               });
-
               console.log(`Deleted environment: ${environmentName}`);
-              deleted = true;
             } catch (error) {
-              // 環境が存在しない場合はエラーを無視
               if (error.status !== 404) {
                 console.error(`Error deleting environment: ${error.message}`);
               } else {
@@ -41,23 +73,24 @@ jobs:
               }
             }
 
-            core.setOutput('deleted', deleted);
-            return deleted;
-
-      - name: Comment on PR about cleanup
-        if: steps.delete-env.outputs.deleted == 'true'
+      - name: Comment on closed PR
         uses: actions/github-script@v7
         with:
           script: |
             const prNumber = context.payload.pull_request.number;
             const isMerged = context.payload.pull_request.merged;
+            const wasCleaned = "${{ steps.cleanup.outputs.cleaned }}" === "true";
 
             const emoji = isMerged ? '🎉' : '👋';
-            const message = isMerged ? 'Thank you for your contribution!' : 'Thank you for your interest!';
+            const message = isMerged ? 'Thank you for your contribution!' : 'Thank you for your PR!';
 
-            const commentBody = `## 🧹 Preview Environment Cleaned Up\n\n` +
-              `The preview environment for PR #${prNumber} has been removed.\n\n` +
-              `${message} ${emoji}`;
+            let commentBody = `## ${emoji} PR Closed\n\n`;
+
+            if (wasCleaned) {
+              commentBody += `The preview deployment for PR #${prNumber} has been removed from GitHub Pages.\n\n`;
+            }
+
+            commentBody += `${message}`;
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,

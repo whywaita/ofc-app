@@ -1,22 +1,20 @@
-name: PR Preview Deploy
+name: PR Preview Build
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
   deployments: write
-  pages: write
-  id-token: write
 
 jobs:
-  build-preview:
+  build-and-deploy:
     runs-on: ubuntu-latest
     environment:
       name: pr-preview-${{ github.event.pull_request.number }}
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-${{ github.event.pull_request.number }}/
 
     steps:
       - name: Checkout repository
@@ -36,47 +34,57 @@ jobs:
       - name: Build Web for PR Preview
         run: |
           cd app
-          # PRプレビュー用のベースパスを設定
-          flutter build web --release --base-href "/${GITHUB_REPOSITORY#*/}/pr-preview/${{ github.event.pull_request.number }}/"
+          # PR環境用のベースパスを設定
+          flutter build web --release --base-href "/${GITHUB_REPOSITORY#*/}/pr-${{ github.event.pull_request.number }}/"
 
-      - name: Upload preview artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: pr-preview-${{ github.event.pull_request.number }}
-          path: app/build/web/
-          retention-days: 7
+      - name: Checkout gh-pages branch
+        run: |
+          git fetch origin gh-pages:gh-pages || git checkout --orphan gh-pages
+          git checkout gh-pages
 
-      - name: Setup Pages for PR
-        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+      - name: Deploy PR preview to gh-pages
+        run: |
+          # PR環境のディレクトリを作成
+          PR_DIR="pr-${{ github.event.pull_request.number }}"
 
-      - name: Upload to GitHub Pages artifact
-        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
-        with:
-          path: 'app/build/web'
-          name: github-pages-pr-${{ github.event.pull_request.number }}
+          # 既存のPRディレクトリを削除して新しいビルドで置き換え
+          rm -rf $PR_DIR
+          cp -r app/build/web $PR_DIR
 
-      - name: Deploy to GitHub Pages Environment
-        id: deployment
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
-        with:
-          artifact_name: github-pages-pr-${{ github.event.pull_request.number }}
+          # PR情報ファイルを追加
+          echo "PR #${{ github.event.pull_request.number }}" > $PR_DIR/PR_INFO.txt
+          echo "Branch: ${{ github.event.pull_request.head.ref }}" >> $PR_DIR/PR_INFO.txt
+          echo "Built at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $PR_DIR/PR_INFO.txt
+
+          # Gitの設定
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # コミット & プッシュ
+          git add $PR_DIR
+          git commit -m "Deploy PR #${{ github.event.pull_request.number }} preview" || echo "No changes to commit"
+          git push origin gh-pages
 
       - name: Comment PR with preview link
         uses: actions/github-script@v7
         with:
           script: |
             const prNumber = context.payload.pull_request.number;
-            const runId = context.runId;
-            const artifactUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+            const previewUrl = `https://${context.repo.owner}.github.io/${context.repo.repo}/pr-${prNumber}/`;
+            const headRef = context.payload.pull_request.head.ref;
+            const headSha = context.payload.pull_request.head.sha;
 
-            const commentBody = `## 🚀 Preview Build Complete!\n\n` +
-              `Your PR preview has been built successfully.\n\n` +
-              `**Environment:** \`pr-preview-${prNumber}\`\n` +
-              `**Build Artifact:** [View in Actions](${artifactUrl})\n` +
-              `**Deployment URL:** ${{ steps.deployment.outputs.page_url }}\n\n` +
-              `> 📦 The build artifact can be downloaded from the Actions tab for local testing.\n\n` +
+            const commentBody = `## 🚀 Preview Deployment Ready!\n\n` +
+              `Your PR preview has been deployed to GitHub Pages.\n\n` +
+              `### 🌐 Preview URL\n` +
+              `**[Open Preview](${previewUrl})**\n\n` +
+              `### 📦 Build Information\n` +
+              `- **PR:** #${prNumber}\n` +
+              `- **Branch:** \`${headRef}\`\n` +
+              `- **Commit:** \`${headSha.substring(0, 7)}\`\n` +
+              `- **Environment:** \`pr-preview-${prNumber}\`\n\n` +
               `---\n` +
-              `*This comment is automatically updated on each push to this PR.*`;
+              `*This preview will be automatically updated on each push to this PR.*`;
 
             // 既存のプレビューコメントを探す
             const comments = await github.rest.issues.listComments({
@@ -87,7 +95,7 @@ jobs:
 
             const botComment = comments.data.find(comment =>
               comment.user?.type === 'Bot' &&
-              comment.body?.includes('Preview Build Complete')
+              (comment.body?.includes('Preview Deployment Ready') || comment.body?.includes('Preview Build Complete'))
             );
 
             if (botComment) {
