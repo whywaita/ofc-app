@@ -1,0 +1,117 @@
+name: PR Preview Build
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  deployments: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: pr-preview-${{ github.event.pull_request.number }}
+      url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-${{ github.event.pull_request.number }}/
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@fd55f4c5af5b953cc57a2be44cb082c8f6635e8e # v2.21.0
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: |
+          cd app
+          flutter pub get
+
+      - name: Build Web for PR Preview
+        run: |
+          cd app
+          # PR環境用のベースパスを設定
+          flutter build web --release --base-href "/${GITHUB_REPOSITORY#*/}/pr-${{ github.event.pull_request.number }}/"
+
+      - name: Checkout gh-pages branch
+        run: |
+          git fetch origin gh-pages:gh-pages || git checkout --orphan gh-pages
+          git checkout gh-pages
+
+      - name: Deploy PR preview to gh-pages
+        run: |
+          # PR環境のディレクトリを作成
+          PR_DIR="pr-${{ github.event.pull_request.number }}"
+
+          # 既存のPRディレクトリを削除して新しいビルドで置き換え
+          rm -rf $PR_DIR
+          cp -r app/build/web $PR_DIR
+
+          # PR情報ファイルを追加
+          echo "PR #${{ github.event.pull_request.number }}" > $PR_DIR/PR_INFO.txt
+          echo "Branch: ${{ github.event.pull_request.head.ref }}" >> $PR_DIR/PR_INFO.txt
+          echo "Built at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $PR_DIR/PR_INFO.txt
+
+          # Gitの設定
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # コミット & プッシュ
+          git add $PR_DIR
+          git commit -m "Deploy PR #${{ github.event.pull_request.number }} preview" || echo "No changes to commit"
+          git push origin gh-pages
+
+      - name: Comment PR with preview link
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const previewUrl = `https://${context.repo.owner}.github.io/${context.repo.repo}/pr-${prNumber}/`;
+            const headRef = context.payload.pull_request.head.ref;
+            const headSha = context.payload.pull_request.head.sha;
+
+            const commentBody = `## 🚀 Preview Deployment Ready!\n\n` +
+              `Your PR preview has been deployed to GitHub Pages.\n\n` +
+              `### 🌐 Preview URL\n` +
+              `**[Open Preview](${previewUrl})**\n\n` +
+              `### 📦 Build Information\n` +
+              `- **PR:** #${prNumber}\n` +
+              `- **Branch:** \`${headRef}\`\n` +
+              `- **Commit:** \`${headSha.substring(0, 7)}\`\n` +
+              `- **Environment:** \`pr-preview-${prNumber}\`\n\n` +
+              `---\n` +
+              `*This preview will be automatically updated on each push to this PR.*`;
+
+            // 既存のプレビューコメントを探す
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const botComment = comments.data.find(comment =>
+              comment.user?.type === 'Bot' &&
+              (comment.body?.includes('Preview Deployment Ready') || comment.body?.includes('Preview Build Complete'))
+            );
+
+            if (botComment) {
+              // 既存のコメントを更新
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              // 新しいコメントを作成
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+            }
