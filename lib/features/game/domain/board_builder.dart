@@ -1,25 +1,44 @@
+import 'dart:collection';
 import '../../../core/models/playing_card.dart';
 
 class BoardBuilder {
-  final List<PlayingCard> top = [];
-  final List<PlayingCard> middle = [];
-  final List<PlayingCard> bottom = [];
+  final List<PlayingCard> _top = [];
+  final List<PlayingCard> _middle = [];
+  final List<PlayingCard> _bottom = [];
+
+  /// Returns an unmodifiable view of the top cards
+  UnmodifiableListView<PlayingCard> get top => UnmodifiableListView(_top);
+
+  /// Returns an unmodifiable view of the middle cards
+  UnmodifiableListView<PlayingCard> get middle => UnmodifiableListView(_middle);
+
+  /// Returns an unmodifiable view of the bottom cards
+  UnmodifiableListView<PlayingCard> get bottom => UnmodifiableListView(_bottom);
 
   bool get isComplete =>
-      top.length == 3 && middle.length == 5 && bottom.length == 5;
+      _top.length == 3 && _middle.length == 5 && _bottom.length == 5;
 
   void placeTop(PlayingCard c) {
-    if (top.length >= 3) throw StateError('Top is full');
-    top.add(c);
+    if (_top.length >= 3) throw StateError('Top is full');
+    _top.add(c);
   }
 
   void placeMiddle(PlayingCard c) {
-    if (middle.length >= 5) throw StateError('Middle is full');
-    middle.add(c);
+    if (_middle.length >= 5) throw StateError('Middle is full');
+    _middle.add(c);
   }
 
   void placeBottom(PlayingCard c) {
-    if (bottom.length >= 5) throw StateError('Bottom is full');
-    bottom.add(c);
+    if (_bottom.length >= 5) throw StateError('Bottom is full');
+    _bottom.add(c);
+  }
+
+  /// Removes a card from all rows (top, middle, bottom)
+  /// Returns true if the card was found and removed, false otherwise
+  bool remove(PlayingCard card) {
+    if (_top.remove(card)) return true;
+    if (_middle.remove(card)) return true;
+    if (_bottom.remove(card)) return true;
+    return false;
   }
 }

@@ -5,6 +5,7 @@ import 'package:ofc_app_core/features/game/domain/game_state.dart';
 import 'package:ofc_app_core/features/game/domain/pineapple_engine.dart';
 import 'pass_play_result.dart';
 import 'package:ofc_app_core/features/game/domain/score_engine.dart';
+import 'widgets/card_widget.dart';
 
 class PassPlayScreen extends StatefulWidget {
   const PassPlayScreen({super.key});
@@ -35,49 +36,8 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
 
   PineappleEngine get eng => gs.engineOf(current);
 
-  String _rank(PlayingCard c) {
-    switch (c.rank.name) {
-      case 'ace':
-        return 'A';
-      case 'king':
-        return 'K';
-      case 'queen':
-        return 'Q';
-      case 'jack':
-        return 'J';
-      case 'ten':
-        return 'T';
-      default:
-        return c.rank.value.toString();
-    }
-  }
-
-  String _suit(PlayingCard c) {
-    switch (c.suit.name) {
-      case 'hearts':
-        return '♥️';
-      case 'diamonds':
-        return '♦️';
-      case 'spades':
-        return '♠️';
-      default:
-        return '♣️';
-    }
-  }
-
-  bool _isRed(PlayingCard c) => c.suit.name == 'hearts' || c.suit.name == 'diamonds';
-
-  Widget _card(PlayingCard c, {bool large = false, Color? border}) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: border ?? Colors.grey.shade400),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 2, offset: const Offset(0, 1))],
-        ),
-        child: Text('${_rank(c)}${_suit(c)}',
-            style: TextStyle(fontSize: large ? 22 : 18, color: _isRed(c) ? Colors.red : Colors.black87, fontWeight: FontWeight.w600)),
-      );
+  Widget _card(PlayingCard c, {bool large = false, Color? border}) =>
+      CardWidget(card: c, large: large, borderColor: border);
 
   Set<String> _ids() => CycleLogic.currentCycleIds(eng.history);
   int _last() => CycleLogic.lastDrawCount(eng.history);
@@ -100,18 +60,19 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
         if (eng.tray.contains(c)) {
           gs.place(current, slot, c);
         } else {
-          eng.builder.top.remove(c);
-          eng.builder.middle.remove(c);
-          eng.builder.bottom.remove(c);
+          // Move card from one board position to another
+          if (!eng.builder.remove(c)) {
+            throw StateError('Card not found on board: $c');
+          }
           switch (slot) {
             case Slot.top:
-              eng.builder.top.add(c);
+              eng.builder.placeTop(c);
               break;
             case Slot.middle:
-              eng.builder.middle.add(c);
+              eng.builder.placeMiddle(c);
               break;
             case Slot.bottom:
-              eng.builder.bottom.add(c);
+              eng.builder.placeBottom(c);
               break;
           }
         }
@@ -246,10 +207,7 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
                 return ids.contains(d.data.toString());
               },
               onAcceptWithDetails: (d) => setState(() {
-                eng.builder.top.remove(d.data);
-                eng.builder.middle.remove(d.data);
-                eng.builder.bottom.remove(d.data);
-                eng.tray.add(d.data);
+                eng.returnToTray(d.data);
                 status = 'Back to Tray';
               }),
               builder: (context, cand, _) => Column(
@@ -281,7 +239,7 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
                     child: ElevatedButton(
                       onPressed: tray.length >= 2
                           ? () => setState(() {
-                                tray.sort((a, b) {
+                                eng.sortTray((a, b) {
                                   final rv = b.rank.value.compareTo(a.rank.value);
                                   if (rv != 0) return rv;
                                   int suitOrder(String s) => switch (s) {
