@@ -157,7 +157,7 @@ void main() {
 
       // Cycle 3
       gs.nextCycle(Player.a);
-      gs.place(Player.a, Slot.middle, c('3s'));
+      gs.place(Player.a, Slot.bottom, c('3s'));
       gs.place(Player.a, Slot.bottom, c('2s'));
       gs.aEngine.discard(c('Ah'));
 
