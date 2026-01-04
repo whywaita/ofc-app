@@ -59,9 +59,7 @@ class CycleLogic {
     final ids = currentCycleIds(eng.history);
     final leftovers = trayCardsForCycle(eng.tray, ids);
     for (final c in leftovers) {
-      eng.tray.remove(c);
-      eng.discards.add(c);
-      eng.history.add(ActionLogEntry('discard', {'card': c.toString()}));
+      eng.discard(c);
     }
     return leftovers;
   }

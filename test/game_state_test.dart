@@ -126,11 +126,12 @@ void main() {
   group('finalize', () {
     test('finalizes player board and stores it', () {
       final deck = Deck.fromCodes([
-        // 13 cards total for complete board
+        // 15 cards total for complete board (3 top + 5 middle + 5 bottom + 2 discarded)
         'As', 'Ks', 'Qs', 'Js', 'Ts', // Initial 5
         '9s', '8s', '7s', // Cycle 1
         '6s', '5s', '4s', // Cycle 2
         '3s', '2s', 'Ah', // Cycle 3
+        'Kh', 'Qh', 'Jh', // Cycle 4
       ]);
       final gs = GameState(deck: deck);
       gs.deal(Player.a);
@@ -156,9 +157,15 @@ void main() {
 
       // Cycle 3
       gs.nextCycle(Player.a);
-      gs.place(Player.a, Slot.bottom, c('3s'));
+      gs.place(Player.a, Slot.middle, c('3s'));
       gs.place(Player.a, Slot.bottom, c('2s'));
       gs.aEngine.discard(c('Ah'));
+
+      // Cycle 4
+      gs.nextCycle(Player.a);
+      gs.place(Player.a, Slot.bottom, c('Kh'));
+      gs.place(Player.a, Slot.bottom, c('Qh'));
+      gs.aEngine.discard(c('Jh'));
 
       // Now board should be complete
       expect(gs.aEngine.builder.isComplete, isTrue);
@@ -167,7 +174,7 @@ void main() {
       expect(gs.boardA, isNotNull);
       expect(gs.boardA!.top.length, 3);
       expect(gs.boardA!.middle.length, 5);
-      expect(gs.boardA!.bottom.length, 3); // Only placed 3 bottom cards
+      expect(gs.boardA!.bottom.length, 5);
     });
 
     test('throws if board not complete', () {
