@@ -29,10 +29,14 @@ class GameState {
   GameState(
       {GameOptions? options,
       Deck? deck,
+      int? seed,
       FantasyState? fantasyA,
       FantasyState? fantasyB})
       : options = options ?? GameOptions.standard,
-        deck = deck ?? Deck.standard(),
+        deck = deck ??
+            ((options?.isJokerWild ?? false)
+                ? Deck.withJokers(seed: seed, jokerCount: 2)
+                : Deck.standard(seed: seed)),
         fantasyA = fantasyA ?? const FantasyState.inactive(),
         fantasyB = fantasyB ?? const FantasyState.inactive() {
     aEngine = PineappleEngine(this.deck);

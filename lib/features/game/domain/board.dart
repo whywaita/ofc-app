@@ -26,6 +26,13 @@ class BoardEval {
         bottom: HandEvaluator.evaluate5DeucesWild(b.bottom),
       );
     }
+    if (wildMode == WildMode.joker) {
+      return BoardEval(
+        top: HandEvaluator.evaluate3JokerWild(b.top),
+        middle: HandEvaluator.evaluate5JokerWild(b.middle),
+        bottom: HandEvaluator.evaluate5JokerWild(b.bottom),
+      );
+    }
     return BoardEval(
       top: HandEvaluator.evaluate3(b.top),
       middle: HandEvaluator.evaluate5(b.middle),

@@ -496,4 +496,338 @@ class HandEvaluator {
     return Hand3Rank(Hand3Category.highCard, ranks.reversed.toList(),
         isWild: true);
   }
+
+  // ========== Joker Wild Evaluation ==========
+
+  /// Joker Wild: 5-card hand evaluation
+  static Hand5Rank evaluate5JokerWild(List<PlayingCard> cards) {
+    if (cards.length != 5) {
+      throw ArgumentError('Need 5 cards');
+    }
+
+    final jokers = cards.where((c) => c.isJoker).length;
+    final nonJokers = cards.where((c) => !c.isJoker).toList();
+
+    if (jokers == 0) {
+      return evaluate5(nonJokers);
+    }
+
+    return _findBestWithJokers5(nonJokers, jokers);
+  }
+
+  /// Joker Wild: 3-card hand evaluation
+  static Hand3Rank evaluate3JokerWild(List<PlayingCard> cards) {
+    if (cards.length != 3) {
+      throw ArgumentError('Need 3 cards');
+    }
+
+    final jokers = cards.where((c) => c.isJoker).length;
+    final nonJokers = cards.where((c) => !c.isJoker).toList();
+
+    if (jokers == 0) {
+      return evaluate3(nonJokers);
+    }
+
+    return _findBestWithJokers3(nonJokers, jokers);
+  }
+
+  /// Find best 5-card hand with jokers as wild cards
+  static Hand5Rank _findBestWithJokers5(
+      List<PlayingCard> nonJokers, int jokers) {
+    final ranks = nonJokers.map((c) => c.rank!.value).toList()..sort();
+    final suits = nonJokers.map((c) => c.suit).toList();
+
+    // Count ranks of non-jokers
+    final counts = <int, int>{};
+    for (final r in ranks) {
+      counts[r] = (counts[r] ?? 0) + 1;
+    }
+
+    // Count suits of non-jokers
+    final suitCounts = <dynamic, int>{};
+    for (final s in suits) {
+      suitCounts[s] = (suitCounts[s] ?? 0) + 1;
+    }
+
+    // Check Straight Flush (including Royal Flush)
+    final sfHigh = _canMakeStraightFlushJoker(nonJokers, jokers);
+    if (sfHigh != null) {
+      return Hand5Rank(Hand5Category.straightFlush, [sfHigh], isWild: true);
+    }
+
+    // Check Four of a Kind
+    final maxCount =
+        counts.isEmpty ? 0 : counts.values.reduce((a, b) => a > b ? a : b);
+    if (maxCount + jokers >= 4) {
+      int fourRank = 0;
+      for (final entry in counts.entries) {
+        if (entry.value + jokers >= 4 && entry.key > fourRank) {
+          fourRank = entry.key;
+        }
+      }
+      if (fourRank == 0 && jokers >= 4) {
+        fourRank = 14; // Ace
+      }
+      final remaining = ranks.where((r) => r != fourRank).toList();
+      final kicker =
+          remaining.isEmpty ? 14 : remaining.reduce((a, b) => a > b ? a : b);
+      return Hand5Rank(Hand5Category.fourOfAKind, [fourRank, kicker],
+          isWild: true);
+    }
+
+    // Check Full House
+    if (_canMakeFullHouseJoker(counts, jokers)) {
+      final fhResult = _bestFullHouseJoker(counts, jokers);
+      return Hand5Rank(Hand5Category.fullHouse, fhResult, isWild: true);
+    }
+
+    // Check Flush
+    final maxSuitCount = suitCounts.isEmpty
+        ? 0
+        : suitCounts.values.reduce((a, b) => a > b ? a : b);
+    if (maxSuitCount + jokers >= 5) {
+      final flushSuit =
+          suitCounts.entries.firstWhere((e) => e.value == maxSuitCount).key;
+      final flushRanks = nonJokers
+          .where((c) => c.suit == flushSuit)
+          .map((c) => c.rank!.value)
+          .toList()
+        ..sort((a, b) => b - a);
+      while (flushRanks.length < 5) {
+        flushRanks.add(14);
+      }
+      return Hand5Rank(Hand5Category.flush, flushRanks.take(5).toList(),
+          isWild: true);
+    }
+
+    // Check Straight
+    final straightHigh = _canMakeStraightJoker(ranks, jokers);
+    if (straightHigh != null) {
+      return Hand5Rank(Hand5Category.straight, [straightHigh], isWild: true);
+    }
+
+    // Check Three of a Kind
+    if (maxCount + jokers >= 3) {
+      int threeRank = 0;
+      for (final entry in counts.entries) {
+        if (entry.value + jokers >= 3 && entry.key > threeRank) {
+          threeRank = entry.key;
+        }
+      }
+      if (threeRank == 0 && jokers >= 3) {
+        threeRank = 14;
+      }
+      final kickers = ranks.where((r) => r != threeRank).toList()
+        ..sort((a, b) => b - a);
+      while (kickers.length < 2) {
+        kickers.add(kickers.isEmpty ? 14 : 13);
+      }
+      return Hand5Rank(
+          Hand5Category.threeOfAKind, [threeRank, ...kickers.take(2)],
+          isWild: true);
+    }
+
+    // Check Two Pair
+    final pairsInHand = counts.entries.where((e) => e.value >= 2).length;
+    if (pairsInHand >= 2) {
+      final pairRanks = counts.entries
+          .where((e) => e.value >= 2)
+          .map((e) => e.key)
+          .toList()
+        ..sort((a, b) => b - a);
+      final kicker = ranks.where((r) => !pairRanks.contains(r)).isEmpty
+          ? 14
+          : ranks
+              .where((r) => !pairRanks.contains(r))
+              .reduce((a, b) => a > b ? a : b);
+      return Hand5Rank(
+          Hand5Category.twoPair, [pairRanks[0], pairRanks[1], kicker],
+          isWild: true);
+    }
+
+    // Check One Pair
+    if (jokers >= 1) {
+      final highestNonJoker =
+          ranks.isEmpty ? 0 : ranks.reduce((a, b) => a > b ? a : b);
+      final pairRank = highestNonJoker > 0 ? highestNonJoker : 14;
+      final kickers = ranks.where((r) => r != pairRank).toList()
+        ..sort((a, b) => b - a);
+      while (kickers.length < 3) {
+        kickers.add(14);
+      }
+      return Hand5Rank(Hand5Category.onePair, [pairRank, ...kickers.take(3)],
+          isWild: true);
+    }
+
+    // High card
+    final highs = ranks.reversed.toList();
+    return Hand5Rank(Hand5Category.highCard, highs, isWild: true);
+  }
+
+  /// Check if Straight Flush can be made with jokers
+  static int? _canMakeStraightFlushJoker(
+      List<PlayingCard> nonJokers, int jokers) {
+    if (nonJokers.isEmpty) {
+      return 14; // All jokers: make Royal Flush
+    }
+
+    final bySuit = <dynamic, List<int>>{};
+    for (final c in nonJokers) {
+      bySuit.putIfAbsent(c.suit, () => []).add(c.rank!.value);
+    }
+
+    int? bestHigh;
+    for (final suitRanks in bySuit.values) {
+      if (suitRanks.length + jokers < 5) continue;
+
+      suitRanks.sort();
+      final uniqueRanks = suitRanks.toSet().toList()..sort();
+
+      for (int high = 14; high >= 5; high--) {
+        final needed = <int>[];
+        if (high == 5) {
+          needed.addAll([14, 2, 3, 4, 5]);
+        } else {
+          for (int r = high; r > high - 5; r--) {
+            needed.add(r);
+          }
+        }
+        final have = uniqueRanks.where((r) => needed.contains(r)).length;
+        final gaps = needed.length - have;
+        if (gaps <= jokers) {
+          if (bestHigh == null || high > bestHigh) {
+            bestHigh = high;
+            break;
+          }
+        }
+      }
+    }
+    return bestHigh;
+  }
+
+  /// Check if Straight can be made with jokers
+  static int? _canMakeStraightJoker(List<int> ranks, int jokers) {
+    if (ranks.isEmpty && jokers >= 5) {
+      return 14;
+    }
+
+    final uniqueRanks = ranks.toSet().toList()..sort();
+
+    for (int high = 14; high >= 5; high--) {
+      final needed = <int>[];
+      if (high == 5) {
+        needed.addAll([14, 2, 3, 4, 5]);
+      } else {
+        for (int r = high; r > high - 5; r--) {
+          needed.add(r);
+        }
+      }
+      final have = uniqueRanks.where((r) => needed.contains(r)).length;
+      final gaps = needed.length - have;
+      if (gaps <= jokers && uniqueRanks.length + jokers >= 5) {
+        if (uniqueRanks.length <= 5) {
+          return high;
+        }
+      }
+    }
+    return null;
+  }
+
+  /// Check if Full House can be made with jokers
+  static bool _canMakeFullHouseJoker(Map<int, int> counts, int jokers) {
+    if (counts.isEmpty) {
+      return jokers >= 5;
+    }
+
+    final sortedCounts = counts.values.toList()..sort((a, b) => b - a);
+
+    if (sortedCounts.length >= 2) {
+      final needFor3 = 3 - sortedCounts[0];
+      final needFor2 = 2 - sortedCounts[1];
+      if (needFor3 >= 0 && needFor2 >= 0 && needFor3 + needFor2 <= jokers) {
+        return true;
+      }
+    }
+    if (sortedCounts.length == 1) {
+      final c = sortedCounts[0];
+      if (c + jokers >= 5) {
+        return jokers >= 2 && c >= 3 || jokers >= 3 && c >= 2;
+      }
+    }
+    return false;
+  }
+
+  /// Get best Full House configuration with jokers
+  static List<int> _bestFullHouseJoker(Map<int, int> counts, int jokers) {
+    final entries = counts.entries.toList()
+      ..sort((a, b) {
+        final c = b.value.compareTo(a.value);
+        if (c != 0) return c;
+        return b.key.compareTo(a.key);
+      });
+
+    if (entries.isEmpty) {
+      return [14, 13];
+    }
+
+    if (entries.length == 1) {
+      final rank = entries[0].key;
+      return [rank, 14];
+    }
+
+    final threeRank = entries[0].key;
+    final pairRank = entries[1].key;
+    return [threeRank, pairRank];
+  }
+
+  /// Find best 3-card hand with jokers as wild cards
+  static Hand3Rank _findBestWithJokers3(
+      List<PlayingCard> nonJokers, int jokers) {
+    final ranks = nonJokers.map((c) => c.rank!.value).toList()..sort();
+
+    final counts = <int, int>{};
+    for (final r in ranks) {
+      counts[r] = (counts[r] ?? 0) + 1;
+    }
+
+    final maxCount =
+        counts.isEmpty ? 0 : counts.values.reduce((a, b) => a > b ? a : b);
+
+    // Check Three of a Kind
+    if (maxCount + jokers >= 3) {
+      int threeRank = 0;
+      for (final entry in counts.entries) {
+        if (entry.value + jokers >= 3 && entry.key > threeRank) {
+          threeRank = entry.key;
+        }
+      }
+      if (threeRank == 0) {
+        threeRank = 14;
+      }
+      return Hand3Rank(Hand3Category.threeOfAKind, [threeRank], isWild: true);
+    }
+
+    // Check Pair
+    if (jokers >= 1 || maxCount >= 2) {
+      int pairRank = 0;
+      for (final entry in counts.entries) {
+        if (entry.value + jokers >= 2 && entry.key > pairRank) {
+          pairRank = entry.key;
+        }
+      }
+      if (pairRank == 0 && jokers >= 2) {
+        pairRank = 14;
+      } else if (pairRank == 0 && jokers == 1 && ranks.isNotEmpty) {
+        pairRank = ranks.reduce((a, b) => a > b ? a : b);
+      }
+      final kickers = ranks.where((r) => r != pairRank).toList();
+      final kicker =
+          kickers.isEmpty ? 14 : kickers.reduce((a, b) => a > b ? a : b);
+      return Hand3Rank(Hand3Category.pair, [pairRank, kicker], isWild: true);
+    }
+
+    // High card
+    return Hand3Rank(Hand3Category.highCard, ranks.reversed.toList(),
+        isWild: true);
+  }
 }
