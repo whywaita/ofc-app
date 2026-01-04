@@ -60,18 +60,17 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
         if (eng.tray.contains(c)) {
           gs.place(current, slot, c);
         } else {
-          eng.builder.top.remove(c);
-          eng.builder.middle.remove(c);
-          eng.builder.bottom.remove(c);
+          // Move card from one board position to another
+          eng.builder.remove(c);
           switch (slot) {
             case Slot.top:
-              eng.builder.top.add(c);
+              eng.builder.placeTop(c);
               break;
             case Slot.middle:
-              eng.builder.middle.add(c);
+              eng.builder.placeMiddle(c);
               break;
             case Slot.bottom:
-              eng.builder.bottom.add(c);
+              eng.builder.placeBottom(c);
               break;
           }
         }
@@ -206,10 +205,7 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
                 return ids.contains(d.data.toString());
               },
               onAcceptWithDetails: (d) => setState(() {
-                eng.builder.top.remove(d.data);
-                eng.builder.middle.remove(d.data);
-                eng.builder.bottom.remove(d.data);
-                eng.tray.add(d.data);
+                eng.returnToTray(d.data);
                 status = 'Back to Tray';
               }),
               builder: (context, cand, _) => Column(
@@ -241,7 +237,7 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
                     child: ElevatedButton(
                       onPressed: tray.length >= 2
                           ? () => setState(() {
-                                tray.sort((a, b) {
+                                eng.sortTray((a, b) {
                                   final rv = b.rank.value.compareTo(a.rank.value);
                                   if (rv != 0) return rv;
                                   int suitOrder(String s) => switch (s) {

@@ -67,7 +67,7 @@ class _GameScreenState extends State<GameScreen> {
     final eng = _eng;
     if (eng == null) return;
     setState(() {
-      eng.tray.sort((a, b) {
+      eng.sortTray((a, b) {
         final rv = b.rank.value.compareTo(a.rank.value); // 高いランク優先
         if (rv != 0) return rv;
         int suitOrder(String s) => switch (s) {
@@ -115,18 +115,17 @@ class _GameScreenState extends State<GameScreen> {
         if (eng.tray.contains(c)) {
           eng.place(slot, c);
         } else {
-          eng.builder.top.remove(c);
-          eng.builder.middle.remove(c);
-          eng.builder.bottom.remove(c);
+          // Move card from one board position to another
+          eng.builder.remove(c);
           switch (slot) {
             case Slot.top:
-              eng.builder.top.add(c);
+              eng.builder.placeTop(c);
               break;
             case Slot.middle:
-              eng.builder.middle.add(c);
+              eng.builder.placeMiddle(c);
               break;
             case Slot.bottom:
-              eng.builder.bottom.add(c);
+              eng.builder.placeBottom(c);
               break;
           }
         }
@@ -250,11 +249,8 @@ class _GameScreenState extends State<GameScreen> {
                 },
                 onAcceptWithDetails: (details) => setState(() {
                   final eng2 = _eng!;
-                  // Remove from placed position and return to Tray
-                  eng2.builder.top.remove(details.data);
-                  eng2.builder.middle.remove(details.data);
-                  eng2.builder.bottom.remove(details.data);
-                  eng2.tray.add(details.data);
+                  // Return card from board to tray
+                  eng2.returnToTray(details.data);
                   _status = 'Back to Tray';
                 }),
                 builder: (context, cand, rej) => Container(
