@@ -61,7 +61,9 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
           gs.place(current, slot, c);
         } else {
           // Move card from one board position to another
-          eng.builder.remove(c);
+          if (!eng.builder.remove(c)) {
+            throw StateError('Card not found on board: $c');
+          }
           switch (slot) {
             case Slot.top:
               eng.builder.placeTop(c);

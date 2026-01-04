@@ -36,6 +36,9 @@ class BoardBuilder {
   /// Removes a card from all rows (top, middle, bottom)
   /// Returns true if the card was found and removed, false otherwise
   bool remove(PlayingCard card) {
-    return _top.remove(card) || _middle.remove(card) || _bottom.remove(card);
+    if (_top.remove(card)) return true;
+    if (_middle.remove(card)) return true;
+    if (_bottom.remove(card)) return true;
+    return false;
   }
 }
