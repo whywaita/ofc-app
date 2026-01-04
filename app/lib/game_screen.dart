@@ -7,6 +7,7 @@ import 'package:ofc_app_core/features/game/domain/ruleset.dart';
 import 'result_screen.dart';
 import 'package:ofc_app_core/features/game/domain/cycle_logic.dart';
 import 'package:ofc_app_core/features/game/domain/pineapple_engine.dart';
+import 'widgets/card_widget.dart';
 
 class GameScreen extends StatefulWidget {
   final int seed;
@@ -39,69 +40,13 @@ class _GameScreenState extends State<GameScreen> {
     });
   }
 
-  String _rankSymbol(PlayingCard c) {
-    switch (c.rank.name) {
-      case 'ace':
-        return 'A';
-      case 'king':
-        return 'K';
-      case 'queen':
-        return 'Q';
-      case 'jack':
-        return 'J';
-      case 'ten':
-        return 'T';
-      default:
-        return c.rank.value.toString();
-    }
-  }
-
-  String _suitEmoji(PlayingCard c) {
-    switch (c.suit.name) {
-      case 'hearts':
-        return '♥️';
-      case 'diamonds':
-        return '♦️';
-      case 'spades':
-        return '♠️';
-      default:
-        return '♣️';
-    }
-  }
-
-  bool _isRed(PlayingCard c) =>
-      c.suit.name == 'hearts' || c.suit.name == 'diamonds';
-
   Widget _cardWidget(PlayingCard c,
       {bool large = false, Color? borderColor, bool isSmallScreen = false}) {
-    final txt = '${_rankSymbol(c)}${_suitEmoji(c)}';
-    final color = _isRed(c) ? Colors.red : Colors.black87;
-
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isSmallScreen ? 6 : 10,
-        vertical: isSmallScreen ? 4 : 8,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(isSmallScreen ? 6 : 8),
-        border: Border.all(color: borderColor ?? Colors.grey.shade400),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 2,
-              offset: const Offset(0, 1)),
-        ],
-      ),
-      child: Text(
-        txt,
-        style: TextStyle(
-          fontSize:
-              large ? (isSmallScreen ? 18 : 22) : (isSmallScreen ? 14 : 18),
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+    return CardWidget(
+      card: c,
+      large: large,
+      borderColor: borderColor,
+      isSmallScreen: isSmallScreen,
     );
   }
 

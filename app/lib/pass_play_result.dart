@@ -3,6 +3,7 @@ import 'package:ofc_app_core/features/game/domain/score_engine.dart';
 import 'package:ofc_app_core/features/game/domain/board.dart';
 import 'package:ofc_app_core/core/models/playing_card.dart';
 import 'package:ofc_app_core/features/game/domain/foul_checker.dart';
+import 'widgets/card_widget.dart';
 
 class PassPlayResult extends StatelessWidget {
   final VersusScore score;
@@ -12,48 +13,7 @@ class PassPlayResult extends StatelessWidget {
   final int? nextFantasyB;
   const PassPlayResult({super.key, required this.score, required this.boardA, required this.boardB, this.nextFantasyA, this.nextFantasyB});
 
-  String _rank(PlayingCard c) {
-    switch (c.rank.name) {
-      case 'ace':
-        return 'A';
-      case 'king':
-        return 'K';
-      case 'queen':
-        return 'Q';
-      case 'jack':
-        return 'J';
-      case 'ten':
-        return 'T';
-      default:
-        return c.rank.value.toString();
-    }
-  }
-
-  String _suit(PlayingCard c) {
-    switch (c.suit.name) {
-      case 'hearts':
-        return '♥️';
-      case 'diamonds':
-        return '♦️';
-      case 'spades':
-        return '♠️';
-      default:
-        return '♣️';
-    }
-  }
-
-  bool _isRed(PlayingCard c) => c.suit.name == 'hearts' || c.suit.name == 'diamonds';
-
-  Widget _card(PlayingCard c) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade400),
-        ),
-        child: Text('${_rank(c)}${_suit(c)}',
-            style: TextStyle(fontSize: 16, color: _isRed(c) ? Colors.red : Colors.black87, fontWeight: FontWeight.w600)),
-      );
+  Widget _card(PlayingCard c) => CardWidget(card: c);
 
   @override
   Widget build(BuildContext context) {
