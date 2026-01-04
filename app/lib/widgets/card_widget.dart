@@ -6,7 +6,9 @@ class CardRenderer {
   /// Converts a card's rank to its symbol representation
   /// (A, K, Q, J, T for face cards, number for others)
   static String rankSymbol(PlayingCard card) {
-    switch (card.rank.name) {
+    if (card.isJoker) return '🃏';
+
+    switch (card.rank!.name) {
       case 'ace':
         return 'A';
       case 'king':
@@ -18,13 +20,15 @@ class CardRenderer {
       case 'ten':
         return 'T';
       default:
-        return card.rank.value.toString();
+        return card.rank!.value.toString();
     }
   }
 
   /// Converts a card's suit to its emoji representation
   static String suitEmoji(PlayingCard card) {
-    switch (card.suit.name) {
+    if (card.isJoker) return '';
+
+    switch (card.suit!.name) {
       case 'hearts':
         return '♥️';
       case 'diamonds':
@@ -38,7 +42,7 @@ class CardRenderer {
 
   /// Returns true if the card is red (hearts or diamonds)
   static bool isRed(PlayingCard card) =>
-      card.suit.name == 'hearts' || card.suit.name == 'diamonds';
+      !card.isJoker && (card.suit!.name == 'hearts' || card.suit!.name == 'diamonds');
 
   /// Returns the color for the card text (red or black)
   static Color textColor(PlayingCard card) =>

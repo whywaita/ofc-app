@@ -74,7 +74,12 @@ class _GameScreenState extends State<GameScreen> {
     if (eng == null) return;
     setState(() {
       eng.sortTray((a, b) {
-        final rv = b.rank.value.compareTo(a.rank.value); // 高いランク優先
+        // Handle jokers: put them at the end
+        if (a.isJoker && b.isJoker) return 0;
+        if (a.isJoker) return 1; // a goes after b
+        if (b.isJoker) return -1; // b goes after a
+
+        final rv = b.rank!.value.compareTo(a.rank!.value); // 高いランク優先
         if (rv != 0) return rv;
         int suitOrder(String s) => switch (s) {
               'spades' => 3,
@@ -82,7 +87,7 @@ class _GameScreenState extends State<GameScreen> {
               'diamonds' => 1,
               _ => 0, // clubs
             };
-        return suitOrder(b.suit.name) - suitOrder(a.suit.name);
+        return suitOrder(b.suit!.name) - suitOrder(a.suit!.name);
       });
       _status = 'Sorted';
     });
