@@ -3,6 +3,7 @@ import 'package:ofc_app_core/core/models/deck.dart';
 import 'package:ofc_app_core/features/game/domain/game_state.dart';
 import 'package:ofc_app_core/features/game/domain/fantasy_engine.dart';
 import 'package:ofc_app_core/features/game/domain/board.dart';
+import 'package:ofc_app_core/features/game/domain/pineapple_engine.dart';
 import 'helpers.dart';
 
 void main() {
