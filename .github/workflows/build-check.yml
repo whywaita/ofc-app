@@ -18,20 +18,11 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Get dependencies
-        run: |
-          cd app
-          flutter pub get
-
-      - name: Analyze code
-        run: |
-          cd app
-          flutter analyze
+      - name: Analyze
+        run: make app-analyze
 
       - name: Build Web
-        run: |
-          cd app
-          flutter build web --release
+        run: make app-build-web
 
   build-ios:
     runs-on: macos-latest
@@ -47,16 +38,12 @@ jobs:
           cache: true
 
       - name: Get dependencies
-        run: |
-          cd app
-          flutter pub get
+        working-directory: app
+        run: flutter pub get
 
-      - name: Analyze code
-        run: |
-          cd app
-          flutter analyze
+      - name: Analyze
+        run: make app-analyze
 
       - name: Build iOS (no signing)
-        run: |
-          cd app
-          flutter build ios --release --no-codesign
+        working-directory: app
+        run: flutter build ios --release --no-codesign
