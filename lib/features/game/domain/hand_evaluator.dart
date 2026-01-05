@@ -8,7 +8,7 @@ class HandEvaluator {
     if (cards.length != 5) {
       throw ArgumentError('Need 5 cards');
     }
-    final ranks = cards.map((c) => c.rank.value).toList()..sort();
+    final ranks = cards.map((c) => c.rank!.value).toList()..sort();
     final suits = cards.map((c) => c.suit).toList();
     final isFlush = suits.toSet().length == 1;
 
@@ -112,7 +112,7 @@ class HandEvaluator {
     if (cards.length != 3) {
       throw ArgumentError('Need 3 cards');
     }
-    final ranks = cards.map((c) => c.rank.value).toList()..sort();
+    final ranks = cards.map((c) => c.rank!.value).toList()..sort();
     final counts = <int, int>{};
     for (final r in ranks) {
       counts[r] = (counts[r] ?? 0) + 1;
@@ -166,7 +166,7 @@ class HandEvaluator {
   /// Find best 5-card hand with deuces as wild cards
   static Hand5Rank _findBestWithDeuces5(
       List<PlayingCard> nonDeuces, int deuces) {
-    final ranks = nonDeuces.map((c) => c.rank.value).toList()..sort();
+    final ranks = nonDeuces.map((c) => c.rank!.value).toList()..sort();
     final suits = nonDeuces.map((c) => c.suit).toList();
 
     // Count ranks of non-deuces
@@ -229,7 +229,7 @@ class HandEvaluator {
           suitCounts.entries.firstWhere((e) => e.value == maxSuitCount).key;
       final flushRanks = nonDeuces
           .where((c) => c.suit == flushSuit)
-          .map((c) => c.rank.value)
+          .map((c) => c.rank!.value)
           .toList()
         ..sort((a, b) => b - a);
       // Fill with Aces for deuces
@@ -323,7 +323,7 @@ class HandEvaluator {
     // Group by suit
     final bySuit = <dynamic, List<int>>{};
     for (final c in nonDeuces) {
-      bySuit.putIfAbsent(c.suit, () => []).add(c.rank.value);
+      bySuit.putIfAbsent(c.suit, () => []).add(c.rank!.value);
     }
 
     int? bestHigh;
@@ -445,7 +445,7 @@ class HandEvaluator {
   /// Find best 3-card hand with deuces as wild cards
   static Hand3Rank _findBestWithDeuces3(
       List<PlayingCard> nonDeuces, int deuces) {
-    final ranks = nonDeuces.map((c) => c.rank.value).toList()..sort();
+    final ranks = nonDeuces.map((c) => c.rank!.value).toList()..sort();
 
     // Count ranks
     final counts = <int, int>{};

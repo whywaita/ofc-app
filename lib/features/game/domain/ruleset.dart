@@ -62,9 +62,6 @@ class Ruleset {
       Hand5Category.fullHouse => 6,
       Hand5Category.fourOfAKind => 10,
       Hand5Category.straightFlush => 15,
-      Hand5Category.wildRoyalFlush => 18,
-      Hand5Category.fiveOfAKind => 20,
-      Hand5Category.naturalRoyalFlush => 25,
       _ => 0,
     };
   }
@@ -77,9 +74,6 @@ class Ruleset {
       Hand5Category.fullHouse => r.isWild ? 10 : 12,
       Hand5Category.fourOfAKind => r.isWild ? 16 : 20,
       Hand5Category.straightFlush => r.isWild ? 25 : 30,
-      Hand5Category.wildRoyalFlush => 35,
-      Hand5Category.fiveOfAKind => 40,
-      Hand5Category.naturalRoyalFlush => 50,
       _ => 0,
     };
   }
@@ -91,9 +85,6 @@ class Ruleset {
       Hand5Category.fullHouse => r.isWild ? 5 : 6,
       Hand5Category.fourOfAKind => r.isWild ? 8 : 10,
       Hand5Category.straightFlush => r.isWild ? 12 : 15,
-      Hand5Category.wildRoyalFlush => 18,
-      Hand5Category.fiveOfAKind => 20,
-      Hand5Category.naturalRoyalFlush => 25,
       _ => 0,
     };
   }
