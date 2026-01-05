@@ -30,10 +30,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool _isDeucesWild = false;
+  WildMode _wildMode = WildMode.none;
 
-  GameOptions get _options =>
-      _isDeucesWild ? GameOptions.deucesWild : GameOptions.standard;
+  GameOptions get _options => GameOptions(wildMode: _wildMode);
 
   @override
   Widget build(BuildContext context) {
@@ -74,44 +73,44 @@ class _HomePageState extends State<HomePage> {
                     ),
               ),
               const SizedBox(height: 32),
-              // Deuces Wild toggle
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isSmallScreen ? 12 : 16,
-                  vertical: isSmallScreen ? 8 : 12,
-                ),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.style,
-                          size: isSmallScreen ? 20 : 24,
-                          color: _isDeucesWild
-                              ? Theme.of(context).primaryColor
-                              : Colors.grey,
+              // Wild mode selector
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, bottom: 8),
+                    child: Text(
+                      'Game Mode',
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 12 : 14,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<WildMode>(
+                      segments: const [
+                        ButtonSegment<WildMode>(
+                          value: WildMode.none,
+                          label: Text('Standard'),
                         ),
-                        SizedBox(width: isSmallScreen ? 8 : 12),
-                        Text(
-                          'Deuces Wild',
-                          style: TextStyle(
-                            fontSize: isSmallScreen ? 14 : 16,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        ButtonSegment<WildMode>(
+                          value: WildMode.deuces,
+                          label: Text('Deuces'),
+                        ),
+                        ButtonSegment<WildMode>(
+                          value: WildMode.joker,
+                          label: Text('Joker'),
                         ),
                       ],
+                      selected: {_wildMode},
+                      onSelectionChanged: (s) =>
+                          setState(() => _wildMode = s.first),
                     ),
-                    Switch(
-                      value: _isDeucesWild,
-                      onChanged: (v) => setState(() => _isDeucesWild = v),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               const SizedBox(height: 32),
               // Button area

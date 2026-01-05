@@ -30,7 +30,7 @@ class Deck {
       }
     }
     for (int i = 0; i < jokerCount; i++) {
-      cards.add(const PlayingCard.joker());
+      cards.add(PlayingCard.joker(jokerIndex: i + 1));
     }
     final deck = Deck._(cards);
     deck.shuffle(seed: seed);

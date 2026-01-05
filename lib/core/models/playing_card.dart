@@ -5,9 +5,12 @@ class PlayingCard {
   final Rank? rank;
   final Suit? suit;
   final bool isJoker;
+  final int? jokerIndex; // To distinguish multiple jokers
 
-  const PlayingCard(this.rank, this.suit) : isJoker = false;
-  const PlayingCard.joker()
+  const PlayingCard(this.rank, this.suit)
+      : isJoker = false,
+        jokerIndex = null;
+  const PlayingCard.joker({this.jokerIndex})
       : rank = null,
         suit = null,
         isJoker = true;
@@ -29,14 +32,17 @@ class PlayingCard {
       other is PlayingCard &&
       other.rank == rank &&
       other.suit == suit &&
-      other.isJoker == isJoker;
+      other.isJoker == isJoker &&
+      other.jokerIndex == jokerIndex;
 
   @override
-  int get hashCode => Object.hash(rank, suit, isJoker);
+  int get hashCode => Object.hash(rank, suit, isJoker, jokerIndex);
 
   @override
   String toString() {
-    if (isJoker) return 'Joker';
+    if (isJoker) {
+      return jokerIndex != null ? 'Joker$jokerIndex' : 'Joker';
+    }
     return '${rank!.name}-${suit!.name}';
   }
 }

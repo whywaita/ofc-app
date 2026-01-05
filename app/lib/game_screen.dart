@@ -39,7 +39,10 @@ class _GameScreenState extends State<GameScreen> {
 
   void _deal() {
     setState(() {
-      _eng = PineappleEngine(Deck.standard(seed: widget.seed))
+      final deck = widget.options.isJokerWild
+          ? Deck.withJokers(seed: widget.seed, jokerCount: 2)
+          : Deck.standard(seed: widget.seed);
+      _eng = PineappleEngine(deck)
         ..startHand(
             fantasyInitialCount: _fantasy.active ? _fantasy.initialCount : 0);
       _status = 'Dealt ${_fantasy.active ? _fantasy.initialCount : 5}';
@@ -202,6 +205,12 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
+  String _modeTitle() {
+    if (widget.options.isDeucesWild) return 'Practice (Deuces Wild)';
+    if (widget.options.isJokerWild) return 'Practice (Joker Wild)';
+    return 'Practice';
+  }
+
   @override
   Widget build(BuildContext context) {
     final eng = _eng;
@@ -220,9 +229,7 @@ class _GameScreenState extends State<GameScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.options.isDeucesWild
-            ? 'Practice (Deuces Wild)'
-            : 'Practice'),
+        title: Text(_modeTitle()),
         centerTitle: true,
       ),
       body: SingleChildScrollView(

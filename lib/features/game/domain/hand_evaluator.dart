@@ -781,6 +781,8 @@ class HandEvaluator {
   }
 
   /// Find best 3-card hand with jokers as wild cards
+  /// In OFC Joker Wild, jokers are used as Aces for high card,
+  /// or to enhance existing pairs/trips (not to CREATE new pairs)
   static Hand3Rank _findBestWithJokers3(
       List<PlayingCard> nonJokers, int jokers) {
     final ranks = nonJokers.map((c) => c.rank!.value).toList()..sort();
@@ -793,41 +795,36 @@ class HandEvaluator {
     final maxCount =
         counts.isEmpty ? 0 : counts.values.reduce((a, b) => a > b ? a : b);
 
-    // Check Three of a Kind
-    if (maxCount + jokers >= 3) {
-      int threeRank = 0;
-      for (final entry in counts.entries) {
-        if (entry.value + jokers >= 3 && entry.key > threeRank) {
-          threeRank = entry.key;
-        }
-      }
-      if (threeRank == 0) {
-        threeRank = 14;
-      }
-      return Hand3Rank(Hand3Category.threeOfAKind, [threeRank], isWild: true);
+    // Check Three of a Kind - only if we have a natural pair to enhance
+    // or if we have 2+ jokers with a card, or 3 jokers
+    if (jokers >= 3) {
+      // Three jokers = Three Aces
+      return Hand3Rank(Hand3Category.threeOfAKind, [14], isWild: true);
+    }
+    if (jokers >= 2 && ranks.isNotEmpty) {
+      // Two jokers + one card = Three of that card's rank
+      final highRank = ranks.reduce((a, b) => a > b ? a : b);
+      return Hand3Rank(Hand3Category.threeOfAKind, [highRank], isWild: true);
+    }
+    if (jokers == 1 && maxCount >= 2) {
+      // One joker + natural pair = Three of a Kind
+      final pairRank = counts.entries.firstWhere((e) => e.value >= 2).key;
+      return Hand3Rank(Hand3Category.threeOfAKind, [pairRank], isWild: true);
     }
 
-    // Check Pair
-    if (jokers >= 1 || maxCount >= 2) {
-      int pairRank = 0;
-      for (final entry in counts.entries) {
-        if (entry.value + jokers >= 2 && entry.key > pairRank) {
-          pairRank = entry.key;
-        }
-      }
-      if (pairRank == 0 && jokers >= 2) {
-        pairRank = 14;
-      } else if (pairRank == 0 && jokers == 1 && ranks.isNotEmpty) {
-        pairRank = ranks.reduce((a, b) => a > b ? a : b);
-      }
+    // Check natural Pair (without joker help to CREATE it)
+    if (maxCount >= 2) {
+      final pairRank = counts.entries.firstWhere((e) => e.value >= 2).key;
       final kickers = ranks.where((r) => r != pairRank).toList();
       final kicker =
           kickers.isEmpty ? 14 : kickers.reduce((a, b) => a > b ? a : b);
       return Hand3Rank(Hand3Category.pair, [pairRank, kicker], isWild: true);
     }
 
-    // High card
-    return Hand3Rank(Hand3Category.highCard, ranks.reversed.toList(),
+    // High card: Joker becomes Ace
+    // Sort ranks with jokers as Aces (14)
+    final allRanks = [...ranks, ...List.filled(jokers, 14)]..sort((a, b) => b - a);
+    return Hand3Rank(Hand3Category.highCard, allRanks.take(3).toList(),
         isWild: true);
   }
 }

@@ -42,7 +42,8 @@ class CardRenderer {
 
   /// Returns true if the card is red (hearts or diamonds)
   static bool isRed(PlayingCard card) =>
-      !card.isJoker && (card.suit!.name == 'hearts' || card.suit!.name == 'diamonds');
+      !card.isJoker &&
+      (card.suit!.name == 'hearts' || card.suit!.name == 'diamonds');
 
   /// Returns the color for the card text (red or black)
   static Color textColor(PlayingCard card) =>
