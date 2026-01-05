@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ofc_app_core/features/game/domain/game_options.dart';
 import 'game_screen.dart';
 import 'pass_play_screen.dart';
 
@@ -21,8 +22,18 @@ class OfcApp extends StatelessWidget {
   }
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  bool _isDeucesWild = false;
+
+  GameOptions get _options =>
+      _isDeucesWild ? GameOptions.deucesWild : GameOptions.standard;
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +73,47 @@ class HomePage extends StatelessWidget {
                       fontSize: isSmallScreen ? 20 : 24,
                     ),
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 32),
+              // Deuces Wild toggle
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 12 : 16,
+                  vertical: isSmallScreen ? 8 : 12,
+                ),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.style,
+                          size: isSmallScreen ? 20 : 24,
+                          color: _isDeucesWild
+                              ? Theme.of(context).primaryColor
+                              : Colors.grey,
+                        ),
+                        SizedBox(width: isSmallScreen ? 8 : 12),
+                        Text(
+                          'Deuces Wild',
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 14 : 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Switch(
+                      value: _isDeucesWild,
+                      onChanged: (v) => setState(() => _isDeucesWild = v),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
               // Button area
               SizedBox(
                 height: isSmallScreen ? 50 : 56,
@@ -74,7 +125,9 @@ class HomePage extends StatelessWidget {
                     // The seed is passed to GameScreen and displayed on the screen/result screen
                     // ignore: use_build_context_synchronously
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => GameScreen(seed: seed)),
+                      MaterialPageRoute(
+                          builder: (_) =>
+                              GameScreen(seed: seed, options: _options)),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -94,7 +147,8 @@ class HomePage extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const PassPlayScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => PassPlayScreen(options: _options)),
                     );
                   },
                   style: ElevatedButton.styleFrom(

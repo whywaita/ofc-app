@@ -1,5 +1,6 @@
 import 'board.dart';
 import 'foul_checker.dart';
+import 'game_options.dart';
 import 'hand_category3.dart';
 import 'hand_category5.dart';
 import 'ruleset.dart';
@@ -36,9 +37,10 @@ class VersusScore {
 
 class ScoreEngine {
   static VersusScore compare(Board a, Board b,
-      {Ruleset ruleset = Ruleset.defaultRules}) {
-    final ea = BoardEval.from(a);
-    final eb = BoardEval.from(b);
+      {Ruleset ruleset = Ruleset.defaultRules,
+      WildMode wildMode = WildMode.none}) {
+    final ea = BoardEval.from(a, wildMode: wildMode);
+    final eb = BoardEval.from(b, wildMode: wildMode);
     final afoul = FoulChecker.isFoul(ea);
     final bfoul = FoulChecker.isFoul(eb);
 
@@ -95,22 +97,18 @@ class ScoreEngine {
   }
 
   static int _compare5(Hand5Rank a, Hand5Rank b) {
-    final c = a.category.index.compareTo(b.category.index);
-    if (c != 0) return c > 0 ? 1 : -1;
-    for (var i = 0; i < a.tiebreakers.length && i < b.tiebreakers.length; i++) {
-      final d = a.tiebreakers[i].compareTo(b.tiebreakers[i]);
-      if (d != 0) return d > 0 ? 1 : -1;
-    }
+    // Use Hand5Rank.compareTo which considers isWild flag
+    final c = a.compareTo(b);
+    if (c > 0) return 1;
+    if (c < 0) return -1;
     return 0;
   }
 
   static int _compare3(Hand3Rank a, Hand3Rank b) {
-    final c = a.category.index.compareTo(b.category.index);
-    if (c != 0) return c > 0 ? 1 : -1;
-    for (var i = 0; i < a.tiebreakers.length && i < b.tiebreakers.length; i++) {
-      final d = a.tiebreakers[i].compareTo(b.tiebreakers[i]);
-      if (d != 0) return d > 0 ? 1 : -1;
-    }
+    // Use Hand3Rank.compareTo which considers isWild flag
+    final c = a.compareTo(b);
+    if (c > 0) return 1;
+    if (c < 0) return -1;
     return 0;
   }
 }

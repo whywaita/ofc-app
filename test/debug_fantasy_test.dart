@@ -8,7 +8,13 @@ void main() {
   test('debug A board not foul and continues', () {
     final a = Board(
       top: [c('2h'), c('3h'), c('4h')], // High
-      middle: [c('2d'), c('6d'), c('8d'), c('9d'), c('Td')], // Flush (not straight flush)
+      middle: [
+        c('2d'),
+        c('6d'),
+        c('8d'),
+        c('9d'),
+        c('Td')
+      ], // Flush (not straight flush)
       bottom: [c('9s'), c('9d'), c('9c'), c('9h'), c('2s')], // Four of a kind
     );
     final e = BoardEval.from(a);

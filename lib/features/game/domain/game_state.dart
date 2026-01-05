@@ -2,6 +2,7 @@ import '../../../core/models/deck.dart';
 import '../../../core/models/playing_card.dart';
 import 'board.dart';
 import 'fantasy_engine.dart';
+import 'game_options.dart';
 import 'pineapple_engine.dart';
 import 'score_engine.dart';
 
@@ -10,6 +11,7 @@ enum Player { a, b }
 enum GamePhase { drawing, placing, committed }
 
 class GameState {
+  final GameOptions options;
   final Deck deck;
   late PineappleEngine aEngine;
   late PineappleEngine bEngine;
@@ -24,8 +26,13 @@ class GameState {
   Board? boardB;
   VersusScore? lastScore;
 
-  GameState({Deck? deck, FantasyState? fantasyA, FantasyState? fantasyB})
-      : deck = deck ?? Deck.standard(),
+  GameState(
+      {GameOptions? options,
+      Deck? deck,
+      FantasyState? fantasyA,
+      FantasyState? fantasyB})
+      : options = options ?? GameOptions.standard,
+        deck = deck ?? Deck.standard(),
         fantasyA = fantasyA ?? const FantasyState.inactive(),
         fantasyB = fantasyB ?? const FantasyState.inactive() {
     aEngine = PineappleEngine(this.deck);
@@ -102,10 +109,11 @@ class GameState {
   }
 
   void _commitResult(Board a, Board b) {
-    final res = ScoreEngine.compare(a, b);
+    final wildMode = options.wildMode;
+    final res = ScoreEngine.compare(a, b, wildMode: wildMode);
     lastScore = res;
-    final ea = BoardEval.from(a);
-    final eb = BoardEval.from(b);
+    final ea = BoardEval.from(a, wildMode: wildMode);
+    final eb = BoardEval.from(b, wildMode: wildMode);
     fantasyA = FantasyEngine.nextState(fantasyA, ea);
     fantasyB = FantasyEngine.nextState(fantasyB, eb);
     phase = GamePhase.committed;

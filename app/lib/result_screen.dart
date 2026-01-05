@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ofc_app_core/features/game/domain/board.dart';
 import 'package:ofc_app_core/features/game/domain/fantasy_engine.dart';
 import 'package:ofc_app_core/features/game/domain/foul_checker.dart';
+import 'package:ofc_app_core/features/game/domain/game_options.dart';
 import 'package:ofc_app_core/features/game/domain/ruleset.dart';
 import 'package:ofc_app_core/features/game/domain/pineapple_engine.dart';
 import 'package:ofc_app_core/core/models/playing_card.dart';
@@ -16,30 +17,46 @@ class ResultScreen extends StatelessWidget {
   final Ruleset ruleset;
   final List<ActionLogEntry>? history;
   final int seed;
-  const ResultScreen({super.key, required this.board, required this.nextFantasy, required this.ruleset, required this.seed, this.history});
+  final WildMode wildMode;
+  const ResultScreen({
+    super.key,
+    required this.board,
+    required this.nextFantasy,
+    required this.ruleset,
+    required this.seed,
+    this.wildMode = WildMode.none,
+    this.history,
+  });
 
   Widget _card(PlayingCard c) => CardWidget(card: c);
 
-  String _cat3Name(Hand3Rank r) => switch (r.category) {
-        Hand3Category.threeOfAKind => 'Trips',
-        Hand3Category.pair => 'Pair',
-        _ => 'High',
-      };
-  String _cat5Name(Hand5Rank r) => switch (r.category) {
-        Hand5Category.straightFlush => 'Straight Flush',
-        Hand5Category.fourOfAKind => 'Four of a Kind',
-        Hand5Category.fullHouse => 'Full House',
-        Hand5Category.flush => 'Flush',
-        Hand5Category.straight => 'Straight',
-        Hand5Category.threeOfAKind => 'Trips',
-        Hand5Category.twoPair => 'Two Pair',
-        Hand5Category.onePair => 'One Pair',
-        _ => 'High Card',
-      };
+  String _cat3Name(Hand3Rank r) {
+    final base = switch (r.category) {
+      Hand3Category.threeOfAKind => 'Trips',
+      Hand3Category.pair => 'Pair',
+      _ => 'High',
+    };
+    return r.isWild ? '$base (Wild)' : base;
+  }
+
+  String _cat5Name(Hand5Rank r) {
+    final base = switch (r.category) {
+      Hand5Category.straightFlush => 'Straight Flush',
+      Hand5Category.fourOfAKind => 'Four of a Kind',
+      Hand5Category.fullHouse => 'Full House',
+      Hand5Category.flush => 'Flush',
+      Hand5Category.straight => 'Straight',
+      Hand5Category.threeOfAKind => 'Trips',
+      Hand5Category.twoPair => 'Two Pair',
+      Hand5Category.onePair => 'One Pair',
+      _ => 'High Card',
+    };
+    return r.isWild ? '$base (Wild)' : base;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final eval = BoardEval.from(board);
+    final eval = BoardEval.from(board, wildMode: wildMode);
     final foul = FoulChecker.isFoul(eval);
     final rTop = ruleset.royaltyTop(eval.top);
     final rMid = ruleset.royaltyMiddle(eval.middle);
@@ -84,7 +101,8 @@ class ResultScreen extends StatelessWidget {
                   tooltip: 'Copy seed',
                   icon: const Icon(Icons.copy_outlined, size: 18),
                   onPressed: () async {
-                    await Clipboard.setData(ClipboardData(text: seed.toString()));
+                    await Clipboard.setData(
+                        ClipboardData(text: seed.toString()));
                   },
                 ),
               ],
@@ -92,15 +110,27 @@ class ResultScreen extends StatelessWidget {
             const SizedBox(height: 12),
             row('Top', _cat3Name(eval.top), rTop),
             const SizedBox(height: 6),
-            Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.center, children: [for (final c in board.top) _card(c)]),
+            Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                alignment: WrapAlignment.center,
+                children: [for (final c in board.top) _card(c)]),
             const SizedBox(height: 12),
             row('Middle', _cat5Name(eval.middle), rMid),
             const SizedBox(height: 6),
-            Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.center, children: [for (final c in board.middle) _card(c)]),
+            Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                alignment: WrapAlignment.center,
+                children: [for (final c in board.middle) _card(c)]),
             const SizedBox(height: 12),
             row('Bottom', _cat5Name(eval.bottom), rBot),
             const SizedBox(height: 6),
-            Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.center, children: [for (final c in board.bottom) _card(c)]),
+            Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                alignment: WrapAlignment.center,
+                children: [for (final c in board.bottom) _card(c)]),
             const Divider(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -116,7 +146,8 @@ class ResultScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(nextFantasy.initialCount),
+                onPressed: () =>
+                    Navigator.of(context).pop(nextFantasy.initialCount),
                 child: const Text('Start Next Hand'),
               ),
             ] else ...[
@@ -128,7 +159,8 @@ class ResultScreen extends StatelessWidget {
             const SizedBox(height: 16),
             if (history != null) ...[
               const Divider(),
-              Text('Action Log (This hand)', style: Theme.of(context).textTheme.titleMedium),
+              Text('Action Log (This hand)',
+                  style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               SizedBox(
                 height: 160,
@@ -141,7 +173,8 @@ class ResultScreen extends StatelessWidget {
                         final n = e.data['count'];
                         return Text('draw: $n');
                       case 'place':
-                        return Text('place: ${e.data['slot']} ${e.data['card']}');
+                        return Text(
+                            'place: ${e.data['slot']} ${e.data['card']}');
                       case 'discard':
                         return Text('discard: ${e.data['card']}');
                       case 'commit':

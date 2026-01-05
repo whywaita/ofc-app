@@ -62,7 +62,8 @@ class CardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = '${CardRenderer.rankSymbol(card)}${CardRenderer.suitEmoji(card)}';
+    final text =
+        '${CardRenderer.rankSymbol(card)}${CardRenderer.suitEmoji(card)}';
     final color = CardRenderer.textColor(card);
 
     return Container(
@@ -85,9 +86,8 @@ class CardWidget extends StatelessWidget {
       child: Text(
         text,
         style: TextStyle(
-          fontSize: large
-              ? (isSmallScreen ? 18 : 22)
-              : (isSmallScreen ? 14 : 18),
+          fontSize:
+              large ? (isSmallScreen ? 18 : 22) : (isSmallScreen ? 14 : 18),
           color: color,
           fontWeight: FontWeight.w600,
         ),
