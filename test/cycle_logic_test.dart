@@ -6,7 +6,8 @@ import 'helpers.dart';
 
 void main() {
   test('initial 5 requires 5 placed to canNext', () {
-    final deck = Deck.fromCodes(['As','Ks','Qs','Js','Ts', '2h','3h','4h']);
+    final deck =
+        Deck.fromCodes(['As', 'Ks', 'Qs', 'Js', 'Ts', '2h', '3h', '4h']);
     final eng = PineappleEngine(deck)..startHand();
     // place 5
     eng.place(Slot.top, c('As'));
@@ -20,11 +21,11 @@ void main() {
   test('3-card cycle requires 2 placed, leftover auto-discard', () {
     final deck = Deck.fromCodes([
       // first 5
-      'As','Ks','Qs','Js','Ts',
+      'As', 'Ks', 'Qs', 'Js', 'Ts',
       // next 3
-      '2h','3h','4h',
+      '2h', '3h', '4h',
       // another 3 (for nextCycle after autoDiscard)
-      '5h','6h','7h',
+      '5h', '6h', '7h',
     ]);
     final eng = PineappleEngine(deck)..startHand();
     // place 5

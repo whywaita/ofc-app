@@ -79,8 +79,7 @@ void main() {
         'As', 'Ks', 'Qs', 'Js', 'Ts', '9s', '8s', '7s', '6s', '5s', '4s', '3s',
         '2s', 'Ah', // 14 cards for fantasy
       ]);
-      final gs = GameState(
-          deck: deck, fantasyA: const FantasyState.active(14));
+      final gs = GameState(deck: deck, fantasyA: const FantasyState.active(14));
       gs.deal(Player.a);
 
       expect(gs.aEngine.tray.length, 14);
@@ -91,7 +90,11 @@ void main() {
   group('place and nextCycle', () {
     test('place adds card to board through engine', () {
       final deck = Deck.fromCodes([
-        'As', 'Ks', 'Qs', 'Js', 'Ts',
+        'As',
+        'Ks',
+        'Qs',
+        'Js',
+        'Ts',
       ]);
       final gs = GameState(deck: deck);
       gs.deal(Player.a);

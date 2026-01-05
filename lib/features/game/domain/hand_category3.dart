@@ -4,7 +4,8 @@ class Hand3Rank implements Comparable<Hand3Rank> {
   final Hand3Category category;
   final List<int>
       tiebreakers; // high to low (e.g., trips rank or pair + kicker)
-  const Hand3Rank(this.category, this.tiebreakers);
+  final bool isWild; // true if wild cards are used (for display purposes)
+  const Hand3Rank(this.category, this.tiebreakers, {this.isWild = false});
 
   @override
   int compareTo(Hand3Rank other) {

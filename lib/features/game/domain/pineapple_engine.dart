@@ -136,5 +136,4 @@ class PineappleEngine {
     _history.add(ActionLogEntry('commit', {}));
     return board;
   }
-
 }

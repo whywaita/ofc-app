@@ -30,15 +30,8 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Get dependencies
-        run: |
-          cd app
-          flutter pub get
-
       - name: Build Web with base-href
-        run: |
-          cd app
-          flutter build web --release --base-href "/${GITHUB_REPOSITORY#*/}/"
+        run: make app-build-web-pages BASE_HREF="/${GITHUB_REPOSITORY#*/}/"
 
       - name: Setup Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0

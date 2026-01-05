@@ -9,7 +9,13 @@ void main() {
     final b1 = Board(
       top: [c('Qh'), c('Qs'), c('2c')], // Pair Q (entry)
       middle: [c('2d'), c('6d'), c('8d'), c('9d'), c('Td')], // Flush
-      bottom: [c('9s'), c('9d'), c('9h'), c('9c'), c('2s')], // Four of a kind (>= Flush)
+      bottom: [
+        c('9s'),
+        c('9d'),
+        c('9h'),
+        c('9c'),
+        c('2s')
+      ], // Four of a kind (>= Flush)
     );
     final e1 = BoardEval.from(b1);
     final enter = FantasyState.inactive();
@@ -20,7 +26,13 @@ void main() {
     // 継続（下段 Four of a Kind）→ 配布枚数は 14 を維持
     final b2 = Board(
       top: [c('2h'), c('3h'), c('4h')], // High
-      middle: [c('2h'), c('6h'), c('8h'), c('9h'), c('Th')], // Flush (not straight flush)
+      middle: [
+        c('2h'),
+        c('6h'),
+        c('8h'),
+        c('9h'),
+        c('Th')
+      ], // Flush (not straight flush)
       bottom: [c('9s'), c('9d'), c('9c'), c('9h'), c('2s')], // Four
     );
     final e2 = BoardEval.from(b2);
@@ -60,7 +72,13 @@ void main() {
     final b = Board(
       top: [c('5h'), c('5d'), c('5s')], // Trips Top
       middle: [c('2h'), c('6h'), c('8h'), c('9h'), c('Th')], // Flush (>= Top)
-      bottom: [c('9s'), c('9d'), c('9c'), c('4d'), c('4s')], // Full House or Trips? (here Trips 9 + 4 4 makes Full House? Actually 9 9 9 4 4)
+      bottom: [
+        c('9s'),
+        c('9d'),
+        c('9c'),
+        c('4d'),
+        c('4s')
+      ], // Full House or Trips? (here Trips 9 + 4 4 makes Full House? Actually 9 9 9 4 4)
     );
     final e = BoardEval.from(b);
     final next = FantasyEngine.nextState(current, e);

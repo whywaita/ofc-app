@@ -13,7 +13,8 @@ enum Hand5Category {
 class Hand5Rank implements Comparable<Hand5Rank> {
   final Hand5Category category;
   final List<int> tiebreakers; // high to low
-  const Hand5Rank(this.category, this.tiebreakers);
+  final bool isWild; // true if wild cards are used (for display purposes)
+  const Hand5Rank(this.category, this.tiebreakers, {this.isWild = false});
 
   @override
   int compareTo(Hand5Rank other) {

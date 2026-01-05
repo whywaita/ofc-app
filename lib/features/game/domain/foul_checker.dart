@@ -6,7 +6,8 @@ class FoulChecker {
   static bool isFoul(BoardEval e) {
     // 厳密比較（カテゴリだけでなくキッカーも考慮）。
     final okBottom = _compare5(e.bottom, e.middle) >= 0; // Bottom ≥ Middle
-    final okMiddle = _compare5(e.middle, _asFive(e.top)) >= 0; // Middle ≥ Top(3枚を5枚相当化)
+    final okMiddle =
+        _compare5(e.middle, _asFive(e.top)) >= 0; // Middle ≥ Top(3枚を5枚相当化)
     return !(okBottom && okMiddle);
   }
 
@@ -15,7 +16,8 @@ class FoulChecker {
       case Hand3Category.threeOfAKind:
         return Hand5Rank(Hand5Category.threeOfAKind, [r.tiebreakers[0]]);
       case Hand3Category.pair:
-        return Hand5Rank(Hand5Category.onePair, [r.tiebreakers[0], r.tiebreakers[1]]);
+        return Hand5Rank(
+            Hand5Category.onePair, [r.tiebreakers[0], r.tiebreakers[1]]);
       case Hand3Category.highCard:
         return Hand5Rank(Hand5Category.highCard, List<int>.from(r.tiebreakers));
     }

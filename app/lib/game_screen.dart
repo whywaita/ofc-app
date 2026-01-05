@@ -3,6 +3,7 @@ import 'package:ofc_app_core/core/models/deck.dart';
 import 'package:ofc_app_core/core/models/playing_card.dart';
 import 'package:ofc_app_core/features/game/domain/board.dart';
 import 'package:ofc_app_core/features/game/domain/fantasy_engine.dart';
+import 'package:ofc_app_core/features/game/domain/game_options.dart';
 import 'package:ofc_app_core/features/game/domain/ruleset.dart';
 import 'result_screen.dart';
 import 'package:ofc_app_core/features/game/domain/cycle_logic.dart';
@@ -11,7 +12,12 @@ import 'widgets/card_widget.dart';
 
 class GameScreen extends StatefulWidget {
   final int seed;
-  const GameScreen({super.key, required this.seed});
+  final GameOptions options;
+  const GameScreen({
+    super.key,
+    required this.seed,
+    this.options = const GameOptions(),
+  });
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -209,7 +215,9 @@ class _GameScreenState extends State<GameScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Practice'),
+        title: Text(widget.options.isDeucesWild
+            ? 'Practice (Deuces Wild)'
+            : 'Practice'),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -317,7 +325,9 @@ class _GameScreenState extends State<GameScreen> {
                             : () async {
                                 if (isFinal) {
                                   final b = _eng!.finalize();
-                                  final e = BoardEval.from(b);
+                                  final wildMode = widget.options.wildMode;
+                                  final e =
+                                      BoardEval.from(b, wildMode: wildMode);
                                   final next =
                                       FantasyEngine.nextState(_fantasy, e);
                                   final nextInit =
@@ -328,6 +338,7 @@ class _GameScreenState extends State<GameScreen> {
                                           nextFantasy: next,
                                           ruleset: _ruleset,
                                           seed: widget.seed,
+                                          wildMode: wildMode,
                                           history: List.of(_eng!.history)),
                                     ),
                                   );

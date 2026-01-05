@@ -168,7 +168,8 @@ void main() {
     });
 
     test('discards getter returns unmodifiable view', () {
-      final deck = Deck.fromCodes(['As', 'Ks', 'Qs', 'Js', 'Ts', '2h', '3h', '4h']);
+      final deck =
+          Deck.fromCodes(['As', 'Ks', 'Qs', 'Js', 'Ts', '2h', '3h', '4h']);
       final eng = PineappleEngine(deck);
       eng.startHand();
 

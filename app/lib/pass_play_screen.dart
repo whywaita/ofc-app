@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ofc_app_core/core/models/playing_card.dart';
 import 'package:ofc_app_core/features/game/domain/cycle_logic.dart';
+import 'package:ofc_app_core/features/game/domain/game_options.dart';
 import 'package:ofc_app_core/features/game/domain/game_state.dart';
 import 'package:ofc_app_core/features/game/domain/pineapple_engine.dart';
 import 'pass_play_result.dart';
@@ -8,7 +9,8 @@ import 'package:ofc_app_core/features/game/domain/score_engine.dart';
 import 'widgets/card_widget.dart';
 
 class PassPlayScreen extends StatefulWidget {
-  const PassPlayScreen({super.key});
+  final GameOptions options;
+  const PassPlayScreen({super.key, this.options = const GameOptions()});
 
   @override
   State<PassPlayScreen> createState() => _PassPlayScreenState();
@@ -22,7 +24,7 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
   @override
   void initState() {
     super.initState();
-    gs = GameState();
+    gs = GameState(options: widget.options);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
         gs.deal(Player.a); // A 5枚
@@ -41,13 +43,17 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
 
   Set<String> _ids() => CycleLogic.currentCycleIds(eng.history);
   int _last() => CycleLogic.lastDrawCount(eng.history);
-  int _placed(Set<String> ids) => CycleLogic.placedCountForCycle(eng.builder, ids);
+  int _placed(Set<String> ids) =>
+      CycleLogic.placedCountForCycle(eng.builder, ids);
   // List<PlayingCard> _leftovers(Set<String> ids) => CycleLogic.trayCardsForCycle(eng.tray, ids);
 
-  Widget _drop(String title, List<PlayingCard> currentCards, int max, Slot slot) {
+  Widget _drop(
+      String title, List<PlayingCard> currentCards, int max, Slot slot) {
     return DragTarget<PlayingCard>(
       onWillAcceptWithDetails: (d) {
-        if (eng.phase != Phase.placing || currentCards.length >= max) return false;
+        if (eng.phase != Phase.placing || currentCards.length >= max) {
+          return false;
+        }
         final last = _last();
         if (last == 3 && eng.tray.contains(d.data)) {
           final placed = _placed(_ids());
@@ -81,7 +87,8 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
       builder: (context, cand, _) => Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          border: Border.all(color: cand.isNotEmpty ? Colors.teal : Colors.grey.shade400),
+          border: Border.all(
+              color: cand.isNotEmpty ? Colors.teal : Colors.grey.shade400),
           borderRadius: BorderRadius.circular(10),
           color: cand.isNotEmpty ? Colors.teal.withValues(alpha: 0.06) : null,
         ),
@@ -94,8 +101,11 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
               if (_ids().contains(c.toString()))
                 Draggable<PlayingCard>(
                   data: c,
-                  feedback: Material(color: Colors.transparent, child: _card(c, large: true, border: Colors.teal)),
-                  childWhenDragging: Opacity(opacity: 0.3, child: _card(c, border: Colors.teal)),
+                  feedback: Material(
+                      color: Colors.transparent,
+                      child: _card(c, large: true, border: Colors.teal)),
+                  childWhenDragging: Opacity(
+                      opacity: 0.3, child: _card(c, border: Colors.teal)),
                   child: _card(c, border: Colors.teal),
                 )
               else
@@ -129,17 +139,26 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
       // Both committed → show result
       final nextFantasyA = gs.fantasyA.active ? gs.fantasyA.initialCount : 0;
       final nextFantasyB = gs.fantasyB.active ? gs.fantasyB.initialCount : 0;
-      final vs = gs.lastScore ?? ScoreEngine.compare(gs.boardA!, gs.boardB!);
+      final wildMode = widget.options.wildMode;
+      final vs = gs.lastScore ??
+          ScoreEngine.compare(gs.boardA!, gs.boardB!, wildMode: wildMode);
       final _ = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
-          builder: (_) => PassPlayResult(score: vs, boardA: gs.boardA!, boardB: gs.boardB!, nextFantasyA: nextFantasyA, nextFantasyB: nextFantasyB),
+          builder: (_) => PassPlayResult(
+              score: vs,
+              boardA: gs.boardA!,
+              boardB: gs.boardB!,
+              nextFantasyA: nextFantasyA,
+              nextFantasyB: nextFantasyB,
+              wildMode: wildMode),
         ),
       );
       // Next hand: 個別Dealし、Fantasyのない側から開始
       setState(() {
         final prevFA = gs.fantasyA;
         final prevFB = gs.fantasyB;
-        gs = GameState(fantasyA: prevFA, fantasyB: prevFB);
+        gs = GameState(
+            options: widget.options, fantasyA: prevFA, fantasyB: prevFB);
         gs.deal(Player.a);
         gs.deal(Player.b);
         final aIsFantasy = gs.aEngine.initialDrawCount > 5;
@@ -180,16 +199,22 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
 
     final isFinal = eng.builder.isComplete;
     final canNext = CycleLogic.canNext(eng);
-    final label = isFinal ? 'Commit ${current == Player.a ? '(A)' : '(B)'}' : 'Next 3';
+    final label =
+        isFinal ? 'Commit ${current == Player.a ? '(A)' : '(B)'}' : 'Next 3';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Pass & Play')),
+      appBar: AppBar(
+          title: Text(widget.options.isDeucesWild
+              ? 'Pass & Play (Deuces Wild)'
+              : 'Pass & Play')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Turn: ${current == Player.a ? 'Player A' : 'Player B'}', textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
+            Text('Turn: ${current == Player.a ? 'Player A' : 'Player B'}',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Text('Status: $status', textAlign: TextAlign.center),
             const Divider(),
@@ -222,8 +247,11 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
                       for (final c in tray)
                         Draggable<PlayingCard>(
                           data: c,
-                          feedback: Material(color: Colors.transparent, child: _card(c, large: true)),
-                          childWhenDragging: Opacity(opacity: 0.3, child: _card(c)),
+                          feedback: Material(
+                              color: Colors.transparent,
+                              child: _card(c, large: true)),
+                          childWhenDragging:
+                              Opacity(opacity: 0.3, child: _card(c)),
                           child: _card(c),
                         ),
                     ],
@@ -240,7 +268,8 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
                       onPressed: tray.length >= 2
                           ? () => setState(() {
                                 eng.sortTray((a, b) {
-                                  final rv = b.rank.value.compareTo(a.rank.value);
+                                  final rv =
+                                      b.rank.value.compareTo(a.rank.value);
                                   if (rv != 0) return rv;
                                   int suitOrder(String s) => switch (s) {
                                         'spades' => 3,
@@ -248,7 +277,8 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
                                         'diamonds' => 1,
                                         _ => 0,
                                       };
-                                  return suitOrder(b.suit.name) - suitOrder(a.suit.name);
+                                  return suitOrder(b.suit.name) -
+                                      suitOrder(a.suit.name);
                                 });
                                 status = 'Sorted';
                               })
@@ -259,7 +289,9 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
                 if (eng.initialDrawCount > 5) const SizedBox(width: 0),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: isFinal ? _onPrimaryButton : (canNext ? _onPrimaryButton : null),
+                    onPressed: isFinal
+                        ? _onPrimaryButton
+                        : (canNext ? _onPrimaryButton : null),
                     child: Text(label),
                   ),
                 ),
@@ -267,7 +299,8 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
             ),
             const SizedBox(height: 8),
             if (eng.discards.isNotEmpty) ...[
-              Text('Your Discards (${eng.discards.length})', textAlign: TextAlign.center),
+              Text('Your Discards (${eng.discards.length})',
+                  textAlign: TextAlign.center),
               const SizedBox(height: 6),
               Wrap(
                 alignment: WrapAlignment.center,

@@ -1,4 +1,5 @@
 import '../../../core/models/playing_card.dart';
+import 'game_options.dart';
 import 'hand_category3.dart';
 import 'hand_category5.dart';
 import 'hand_evaluator.dart';
@@ -17,7 +18,14 @@ class BoardEval {
   const BoardEval(
       {required this.top, required this.middle, required this.bottom});
 
-  factory BoardEval.from(Board b) {
+  factory BoardEval.from(Board b, {WildMode wildMode = WildMode.none}) {
+    if (wildMode == WildMode.deuces) {
+      return BoardEval(
+        top: HandEvaluator.evaluate3DeucesWild(b.top),
+        middle: HandEvaluator.evaluate5DeucesWild(b.middle),
+        bottom: HandEvaluator.evaluate5DeucesWild(b.bottom),
+      );
+    }
     return BoardEval(
       top: HandEvaluator.evaluate3(b.top),
       middle: HandEvaluator.evaluate5(b.middle),

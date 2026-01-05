@@ -16,6 +16,7 @@
 - 解析/テスト/ビルド: `make analyze` `make test` `make build` `make ci`
 - 整形: `make format`
 - 実行: `make app-run DEVICE="iPhone 15"`（シミュ/実機）／Xcode: `make app-ios-open`
+- Web ビルド: `make app-build-web`（静的ファイル → `app/build/web`）
 - CI: PR/Pushで Dart/Flutter の analyze/test/build（pub キャッシュ最適化済）
 
 ## 実装ルール・コーディング
@@ -68,4 +69,4 @@
 
 ## 署名/セキュリティ
 - 機密情報はコミット禁止。iOS 実機は Xcode で Team を選択し自動署名（`make app-ios-open`）。
-- 現状プラットフォームは Android/iOS のみ（web/macos/windows/linux は削除済）。
+- 対応プラットフォーム: Android/iOS/Web（macos/windows/linux は削除済）。
