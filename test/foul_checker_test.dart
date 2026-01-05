@@ -29,6 +29,45 @@ void main() {
     expect(FoulChecker.isFoul(e), isTrue);
   });
 
+  group('Deuces Wild foul prevention', () {
+    test(
+        'Deuces in top should be optimized to not exceed middle (seed 194281128)',
+        () {
+      // Top: 2s 2d Ts (two deuces + Ten)
+      // Without optimization: trips Tens (2s and 2d become Tens)
+      // With optimization: should be AA pair (best pair that doesn't exceed two pair)
+      // Middle: 8c 6s 8d 3c 3d (two pair: 8s and 3s)
+      // Bottom: Qd Ts Kh Kd Qh (two pair: Kings and Queens)
+      final b = Board(
+        top: [c('2s'), c('2d'), c('Ts')],
+        middle: [c('8c'), c('6s'), c('8d'), c('3c'), c('3d')],
+        bottom: [c('Qd'), c('Ts'), c('Kh'), c('Kd'), c('Qh')],
+      );
+      final e = BoardEval.from(b, wildMode: WildMode.deuces);
+      // This should NOT be foul because deuces in top should be optimized
+      // to not exceed middle's strength (two pair)
+      // Top should become pair of Aces (best pair) instead of trips
+      expect(FoulChecker.isFoul(e), isFalse);
+    });
+
+    test('Deuces in top with one deuce should optimize to pair not trips', () {
+      // Top: 2s Ts Ts (one deuce + pair of Tens)
+      // Without optimization: trips Tens
+      // With optimization: should stay as pair of Tens if middle is also pair
+      // Middle: 7h 7d Kc Qs 8h (pair of 7s)
+      // Bottom: As Ad Ah 2c 3c (three of a kind Aces)
+      final b = Board(
+        top: [c('2s'), c('Ts'), c('Td')],
+        middle: [c('7h'), c('7d'), c('Kc'), c('Qs'), c('8h')],
+        bottom: [c('As'), c('Ad'), c('Ah'), c('2c'), c('3c')],
+      );
+      final e = BoardEval.from(b, wildMode: WildMode.deuces);
+      // Top should be pair (TT with kicker) not trips
+      // Because middle is pair of 7s which is less than trips
+      expect(FoulChecker.isFoul(e), isFalse);
+    });
+  });
+
   group('Joker Wild foul prevention', () {
     test(
         'Joker in top should not cause foul when middle is high card - context-aware evaluation',
