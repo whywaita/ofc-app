@@ -51,19 +51,19 @@ void main() {
     });
 
     test('Deuces in top with one deuce should optimize to pair not trips', () {
-      // Top: 2s Ts Ts (one deuce + pair of Tens)
-      // Without optimization: trips Tens
-      // With optimization: should stay as pair of Tens if middle is also pair
+      // Top: 2s 6s 6d (one deuce + pair of 6s)
+      // Without optimization: trips 6s (deuce becomes a 6)
+      // With optimization: should stay as pair of 6s since trips > pair of 7s
       // Middle: 7h 7d Kc Qs 8h (pair of 7s)
       // Bottom: As Ad Ah 2c 3c (three of a kind Aces)
       final b = Board(
-        top: [c('2s'), c('Ts'), c('Td')],
+        top: [c('2s'), c('6s'), c('6d')],
         middle: [c('7h'), c('7d'), c('Kc'), c('Qs'), c('8h')],
         bottom: [c('As'), c('Ad'), c('Ah'), c('2c'), c('3c')],
       );
       final e = BoardEval.from(b, wildMode: WildMode.deuces);
-      // Top should be pair (TT with kicker) not trips
-      // Because middle is pair of 7s which is less than trips
+      // Top should be pair (66 with kicker) not trips
+      // Because trips 6s > pair of 7s (foul), but pair of 6s < pair of 7s (no foul)
       expect(FoulChecker.isFoul(e), isFalse);
     });
   });

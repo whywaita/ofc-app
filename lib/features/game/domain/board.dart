@@ -153,15 +153,13 @@ class BoardEval {
   /// Tries the best evaluation first, then finds alternatives if it would cause foul.
   static Hand3Rank _optimizeTopDeucesWild(
       List<PlayingCard> topCards, Hand5Rank middle) {
-    final deuceCount =
-        topCards.where((c) => c.rank == Rank.two).length;
+    final deuceCount = topCards.where((c) => c.rank == Rank.two).length;
     if (deuceCount == 0) {
       // No deuces, just evaluate normally
       return HandEvaluator.evaluate3DeucesWild(topCards);
     }
 
-    final nonDeuces =
-        topCards.where((c) => c.rank != Rank.two).toList();
+    final nonDeuces = topCards.where((c) => c.rank != Rank.two).toList();
     final nonDeuceRanks = nonDeuces.map((c) => c.rank!.value).toList()..sort();
 
     // Try best evaluation first
@@ -249,8 +247,7 @@ class BoardEval {
         final pair = pairs.reduce((a, b) => a.key > b.key ? a : b);
         final kickers = allRanks.where((r) => r != pair.key).toList()
           ..sort((a, b) => b - a);
-        final kicker =
-            kickers.isEmpty ? 14 : kickers.first;
+        final kicker = kickers.isEmpty ? 14 : kickers.first;
         final pairEval =
             Hand3Rank(Hand3Category.pair, [pair.key, kicker], isWild: true);
         if (!_wouldCauseFoul(pairEval, middle)) {
