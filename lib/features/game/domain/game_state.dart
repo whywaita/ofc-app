@@ -29,14 +29,22 @@ class GameState {
   GameState(
       {GameOptions? options,
       Deck? deck,
+      int? seed,
       FantasyState? fantasyA,
       FantasyState? fantasyB})
       : options = options ?? GameOptions.standard,
-        deck = deck ?? Deck.standard(),
+        deck = deck ?? _createDeck(options, seed),
         fantasyA = fantasyA ?? const FantasyState.inactive(),
         fantasyB = fantasyB ?? const FantasyState.inactive() {
     aEngine = PineappleEngine(this.deck);
     bEngine = PineappleEngine(this.deck);
+  }
+
+  static Deck _createDeck(GameOptions? options, int? seed) {
+    if (options?.isJokerWild ?? false) {
+      return Deck.withJokers(seed: seed, jokerCount: 2);
+    }
+    return Deck.standard(seed: seed);
   }
 
   void startHand() {

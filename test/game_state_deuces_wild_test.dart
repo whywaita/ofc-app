@@ -119,5 +119,4 @@ void main() {
       expect(FantasyEngine.shouldContinue(evalWild), true);
     });
   });
-
 }

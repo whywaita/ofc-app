@@ -51,7 +51,7 @@ void main() {
       eng.startHand();
 
       // Sort by rank descending
-      eng.sortTray((a, b) => b.rank.value.compareTo(a.rank.value));
+      eng.sortTray((a, b) => b.rank!.value.compareTo(a.rank!.value));
 
       final trayList = eng.tray.toList();
       expect(trayList[0], c('As')); // 14
@@ -67,15 +67,15 @@ void main() {
       eng.startHand();
 
       // Sort by suit name alphabetically
-      eng.sortTray((a, b) => a.suit.name.compareTo(b.suit.name));
+      eng.sortTray((a, b) => a.suit!.name.compareTo(b.suit!.name));
 
       final trayList = eng.tray.toList();
-      expect(trayList[0].suit.name, 'clubs');
-      expect(trayList[1].suit.name, 'diamonds');
-      expect(trayList[2].suit.name, 'hearts');
+      expect(trayList[0].suit!.name, 'clubs');
+      expect(trayList[1].suit!.name, 'diamonds');
+      expect(trayList[2].suit!.name, 'hearts');
       // Two spades: 2s and 3s
-      expect(trayList[3].suit.name, 'spades');
-      expect(trayList[4].suit.name, 'spades');
+      expect(trayList[3].suit!.name, 'spades');
+      expect(trayList[4].suit!.name, 'spades');
     });
   });
 

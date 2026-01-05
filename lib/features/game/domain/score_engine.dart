@@ -79,12 +79,23 @@ class ScoreEngine {
     final aSweep = (rows.sum == 3) ? ruleset.sweepBonus : 0;
     final bSweep = (rows.sum == -3) ? ruleset.sweepBonus : 0;
 
-    final aRoyal = ruleset.royaltyTop(ea.top) +
-        ruleset.royaltyMiddle(ea.middle) +
-        ruleset.royaltyBottom(ea.bottom);
-    final bRoyal = ruleset.royaltyTop(eb.top) +
-        ruleset.royaltyMiddle(eb.middle) +
-        ruleset.royaltyBottom(eb.bottom);
+    final int aRoyal;
+    final int bRoyal;
+    if (wildMode != WildMode.none) {
+      aRoyal = ruleset.royaltyTopWild(ea.top) +
+          ruleset.royaltyMiddleWild(ea.middle) +
+          ruleset.royaltyBottomWild(ea.bottom);
+      bRoyal = ruleset.royaltyTopWild(eb.top) +
+          ruleset.royaltyMiddleWild(eb.middle) +
+          ruleset.royaltyBottomWild(eb.bottom);
+    } else {
+      aRoyal = ruleset.royaltyTop(ea.top) +
+          ruleset.royaltyMiddle(ea.middle) +
+          ruleset.royaltyBottom(ea.bottom);
+      bRoyal = ruleset.royaltyTop(eb.top) +
+          ruleset.royaltyMiddle(eb.middle) +
+          ruleset.royaltyBottom(eb.bottom);
+    }
 
     return VersusScore(
       ScoreBreakdown(rows: rows, sweep: aSweep, royalties: aRoyal, foul: 0),
@@ -97,7 +108,6 @@ class ScoreEngine {
   }
 
   static int _compare5(Hand5Rank a, Hand5Rank b) {
-    // Use Hand5Rank.compareTo which considers isWild flag
     final c = a.compareTo(b);
     if (c > 0) return 1;
     if (c < 0) return -1;
@@ -105,7 +115,6 @@ class ScoreEngine {
   }
 
   static int _compare3(Hand3Rank a, Hand3Rank b) {
-    // Use Hand3Rank.compareTo which considers isWild flag
     final c = a.compareTo(b);
     if (c > 0) return 1;
     if (c < 0) return -1;

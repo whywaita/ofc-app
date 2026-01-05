@@ -189,6 +189,12 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
     });
   }
 
+  String _modeTitle() {
+    if (widget.options.isDeucesWild) return 'Pass & Play (Deuces Wild)';
+    if (widget.options.isJokerWild) return 'Pass & Play (Joker Wild)';
+    return 'Pass & Play';
+  }
+
   @override
   Widget build(BuildContext context) {
     final tray = eng.tray;
@@ -203,10 +209,7 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
         isFinal ? 'Commit ${current == Player.a ? '(A)' : '(B)'}' : 'Next 3';
 
     return Scaffold(
-      appBar: AppBar(
-          title: Text(widget.options.isDeucesWild
-              ? 'Pass & Play (Deuces Wild)'
-              : 'Pass & Play')),
+      appBar: AppBar(title: Text(_modeTitle())),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -268,8 +271,13 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
                       onPressed: tray.length >= 2
                           ? () => setState(() {
                                 eng.sortTray((a, b) {
+                                  // Handle jokers: put them at the end
+                                  if (a.isJoker && b.isJoker) return 0;
+                                  if (a.isJoker) return 1;
+                                  if (b.isJoker) return -1;
+
                                   final rv =
-                                      b.rank.value.compareTo(a.rank.value);
+                                      b.rank!.value.compareTo(a.rank!.value);
                                   if (rv != 0) return rv;
                                   int suitOrder(String s) => switch (s) {
                                         'spades' => 3,
@@ -277,8 +285,8 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
                                         'diamonds' => 1,
                                         _ => 0,
                                       };
-                                  return suitOrder(b.suit.name) -
-                                      suitOrder(a.suit.name);
+                                  return suitOrder(b.suit!.name) -
+                                      suitOrder(a.suit!.name);
                                 });
                                 status = 'Sorted';
                               })

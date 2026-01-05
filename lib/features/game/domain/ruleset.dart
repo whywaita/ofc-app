@@ -65,4 +65,74 @@ class Ruleset {
       _ => 0,
     };
   }
+
+  int royaltyMiddleWild(Hand5Rank r) {
+    return switch (r.category) {
+      Hand5Category.threeOfAKind => r.isWild ? 1 : 2,
+      Hand5Category.straight => r.isWild ? 3 : 4,
+      Hand5Category.flush => r.isWild ? 6 : 8,
+      Hand5Category.fullHouse => r.isWild ? 10 : 12,
+      Hand5Category.fourOfAKind => r.isWild ? 16 : 20,
+      Hand5Category.straightFlush => r.isWild ? 25 : 30,
+      _ => 0,
+    };
+  }
+
+  int royaltyBottomWild(Hand5Rank r) {
+    return switch (r.category) {
+      Hand5Category.straight => r.isWild ? 1 : 2,
+      Hand5Category.flush => r.isWild ? 3 : 4,
+      Hand5Category.fullHouse => r.isWild ? 5 : 6,
+      Hand5Category.fourOfAKind => r.isWild ? 8 : 10,
+      Hand5Category.straightFlush => r.isWild ? 12 : 15,
+      _ => 0,
+    };
+  }
+
+  int royaltyTopWild(Hand3Rank r) {
+    if (r.category == Hand3Category.threeOfAKind) {
+      final rank = r.tiebreakers.first;
+      if (rank == 14) return r.isWild ? 18 : 22; // AAA
+      return switch (rank) {
+            2 => r.isWild ? 5 : 7,
+            3 => r.isWild ? 6 : 8,
+            4 => r.isWild ? 7 : 9,
+            5 => r.isWild ? 8 : 10,
+            6 => r.isWild ? 9 : 11,
+            7 => r.isWild ? 10 : 12,
+            8 => r.isWild ? 11 : 13,
+            9 => r.isWild ? 12 : 14,
+            10 => r.isWild ? 13 : 15,
+            11 => r.isWild ? 14 : 16,
+            12 => r.isWild ? 15 : 17,
+            13 => r.isWild ? 16 : 18,
+            _ => 0,
+          } +
+          (r.isWild ? -2 : 0);
+    }
+    if (r.category == Hand3Category.pair) {
+      final pair = r.tiebreakers.first;
+      if (r.isWild) {
+        // Wild pairs: slightly reduced
+        if (pair >= 6 && pair <= 10) return 0;
+        return switch (pair) {
+          11 => 1,
+          12 => 2,
+          13 => 3,
+          14 => 4,
+          _ => 0,
+        };
+      }
+      // Natural pairs: standard
+      if (pair >= 6 && pair <= 10) return 1;
+      return switch (pair) {
+        11 => 2,
+        12 => 3,
+        13 => 4,
+        14 => 5,
+        _ => 0,
+      };
+    }
+    return 0;
+  }
 }

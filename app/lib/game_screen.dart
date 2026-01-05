@@ -39,7 +39,10 @@ class _GameScreenState extends State<GameScreen> {
 
   void _deal() {
     setState(() {
-      _eng = PineappleEngine(Deck.standard(seed: widget.seed))
+      final deck = widget.options.isJokerWild
+          ? Deck.withJokers(seed: widget.seed, jokerCount: 2)
+          : Deck.standard(seed: widget.seed);
+      _eng = PineappleEngine(deck)
         ..startHand(
             fantasyInitialCount: _fantasy.active ? _fantasy.initialCount : 0);
       _status = 'Dealt ${_fantasy.active ? _fantasy.initialCount : 5}';
@@ -74,7 +77,12 @@ class _GameScreenState extends State<GameScreen> {
     if (eng == null) return;
     setState(() {
       eng.sortTray((a, b) {
-        final rv = b.rank.value.compareTo(a.rank.value); // 高いランク優先
+        // Handle jokers: put them at the end
+        if (a.isJoker && b.isJoker) return 0;
+        if (a.isJoker) return 1; // a goes after b
+        if (b.isJoker) return -1; // b goes after a
+
+        final rv = b.rank!.value.compareTo(a.rank!.value); // 高いランク優先
         if (rv != 0) return rv;
         int suitOrder(String s) => switch (s) {
               'spades' => 3,
@@ -82,7 +90,7 @@ class _GameScreenState extends State<GameScreen> {
               'diamonds' => 1,
               _ => 0, // clubs
             };
-        return suitOrder(b.suit.name) - suitOrder(a.suit.name);
+        return suitOrder(b.suit!.name) - suitOrder(a.suit!.name);
       });
       _status = 'Sorted';
     });
@@ -197,6 +205,12 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
+  String _modeTitle() {
+    if (widget.options.isDeucesWild) return 'Practice (Deuces Wild)';
+    if (widget.options.isJokerWild) return 'Practice (Joker Wild)';
+    return 'Practice';
+  }
+
   @override
   Widget build(BuildContext context) {
     final eng = _eng;
@@ -215,9 +229,7 @@ class _GameScreenState extends State<GameScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.options.isDeucesWild
-            ? 'Practice (Deuces Wild)'
-            : 'Practice'),
+        title: Text(_modeTitle()),
         centerTitle: true,
       ),
       body: SingleChildScrollView(

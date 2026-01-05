@@ -22,6 +22,21 @@ class Deck {
     return deck;
   }
 
+  factory Deck.withJokers({int? seed, int jokerCount = 2}) {
+    final cards = <PlayingCard>[];
+    for (final s in Suit.values) {
+      for (final r in Rank.values) {
+        cards.add(PlayingCard(r, s));
+      }
+    }
+    for (int i = 0; i < jokerCount; i++) {
+      cards.add(PlayingCard.joker(jokerIndex: i + 1));
+    }
+    final deck = Deck._(cards);
+    deck.shuffle(seed: seed);
+    return deck;
+  }
+
   factory Deck.fromCodes(List<String> codes) {
     return Deck._(codes.map(PlayingCard.parse).toList());
   }
