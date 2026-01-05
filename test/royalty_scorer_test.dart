@@ -6,12 +6,14 @@ import 'helpers.dart';
 void main() {
   final rules = Ruleset.defaultRules;
   test('top pair/trips royalties (baseline from docs)', () {
+    // Pairs: 66:1, 77:2, 88:3, 99:4, TT:5, JJ:6, QQ:7, KK:8, AA:9
     final topJJ = HandEvaluator.evaluate3([c('Jc'), c('Jd'), c('2h')]);
-    expect(rules.royaltyTop(topJJ), 2);
+    expect(rules.royaltyTop(topJJ), 6);
     final topAA = HandEvaluator.evaluate3([c('As'), c('Ad'), c('7c')]);
-    expect(rules.royaltyTop(topAA), 5);
+    expect(rules.royaltyTop(topAA), 9);
+    // Trips: 222:10, 333:11, ..., KKK:21, AAA:22
     final t222 = HandEvaluator.evaluate3([c('2s'), c('2d'), c('2c')]);
-    expect(rules.royaltyTop(t222), 7);
+    expect(rules.royaltyTop(t222), 10);
     final tAAA = HandEvaluator.evaluate3([c('As'), c('Ah'), c('Ad')]);
     expect(rules.royaltyTop(tAAA), 22);
   });

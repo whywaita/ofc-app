@@ -823,7 +823,8 @@ class HandEvaluator {
 
     // High card: Joker becomes Ace
     // Sort ranks with jokers as Aces (14)
-    final allRanks = [...ranks, ...List.filled(jokers, 14)]..sort((a, b) => b - a);
+    final allRanks = [...ranks, ...List.filled(jokers, 14)]
+      ..sort((a, b) => b - a);
     return Hand3Rank(Hand3Category.highCard, allRanks.take(3).toList(),
         isWild: true);
   }

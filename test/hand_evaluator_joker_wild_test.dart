@@ -166,7 +166,8 @@ void main() {
     });
 
     // OFC foul prevention: Joker should be used as high card when needed
-    test('One joker + K + 6 should be high card (not pair) for OFC top row', () {
+    test('One joker + K + 6 should be high card (not pair) for OFC top row',
+        () {
       // In OFC, we may need to NOT make a pair to avoid foul
       // Joker, K, 6 should be evaluated as K-high (K, Joker as A, 6)
       // NOT as pair of Kings which would cause foul if middle is weaker

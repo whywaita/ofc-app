@@ -79,23 +79,12 @@ class ScoreEngine {
     final aSweep = (rows.sum == 3) ? ruleset.sweepBonus : 0;
     final bSweep = (rows.sum == -3) ? ruleset.sweepBonus : 0;
 
-    final int aRoyal;
-    final int bRoyal;
-    if (wildMode != WildMode.none) {
-      aRoyal = ruleset.royaltyTopWild(ea.top) +
-          ruleset.royaltyMiddleWild(ea.middle) +
-          ruleset.royaltyBottomWild(ea.bottom);
-      bRoyal = ruleset.royaltyTopWild(eb.top) +
-          ruleset.royaltyMiddleWild(eb.middle) +
-          ruleset.royaltyBottomWild(eb.bottom);
-    } else {
-      aRoyal = ruleset.royaltyTop(ea.top) +
-          ruleset.royaltyMiddle(ea.middle) +
-          ruleset.royaltyBottom(ea.bottom);
-      bRoyal = ruleset.royaltyTop(eb.top) +
-          ruleset.royaltyMiddle(eb.middle) +
-          ruleset.royaltyBottom(eb.bottom);
-    }
+    final aRoyal = ruleset.royaltyTop(ea.top) +
+        ruleset.royaltyMiddle(ea.middle) +
+        ruleset.royaltyBottom(ea.bottom);
+    final bRoyal = ruleset.royaltyTop(eb.top) +
+        ruleset.royaltyMiddle(eb.middle) +
+        ruleset.royaltyBottom(eb.bottom);
 
     return VersusScore(
       ScoreBreakdown(rows: rows, sweep: aSweep, royalties: aRoyal, foul: 0),
