@@ -39,6 +39,16 @@ void main() {
       expect(rank.isWild, true);
     });
 
+    test('Issue #17: Kd, 2d, Jd, 2s, Qd should be Royal Flush', () {
+      // Kd, Jd, Qd (diamond) + 2d, 2s (two deuces)
+      // With 2 deuces as Ad and Td, this makes a Royal Flush (A-K-Q-J-T of diamonds)
+      final cards = [c('Kd'), c('2d'), c('Jd'), c('2s'), c('Qd')];
+      final rank = HandEvaluator.evaluate5DeucesWild(cards);
+      expect(rank.category, Hand5Category.straightFlush);
+      expect(rank.tiebreakers.first, 14); // Royal (Ace-high)
+      expect(rank.isWild, true);
+    });
+
     test('Three deuces + two same-suit cards = Straight Flush', () {
       // 3 deuces + As + Ks can make a Royal Flush (As-Ks-Qs-Js-Ts)
       final cards = [c('2s'), c('2h'), c('2d'), c('As'), c('Ks')];

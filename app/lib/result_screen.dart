@@ -41,7 +41,10 @@ class ResultScreen extends StatelessWidget {
 
   String _cat5Name(Hand5Rank r) {
     final base = switch (r.category) {
-      Hand5Category.straightFlush => 'Straight Flush',
+      Hand5Category.straightFlush =>
+        r.tiebreakers.isNotEmpty && r.tiebreakers[0] == 14
+            ? 'Royal Flush'
+            : 'Straight Flush',
       Hand5Category.fourOfAKind => 'Four of a Kind',
       Hand5Category.fullHouse => 'Full House',
       Hand5Category.flush => 'Flush',
