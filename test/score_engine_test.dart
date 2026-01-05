@@ -19,8 +19,11 @@ void main() {
     final res = ScoreEngine.compare(a, b, ruleset: Ruleset.defaultRules);
     final aTotal = res.a.total;
     final bTotal = res.b.total;
-    // A wins all 3 rows (+3), sweep (+3), top royalty +1。B top royalty +1。
-    expect(aTotal, 7);
-    expect(bTotal, -2);
+    // A wins all 3 rows (+3), sweep (+3), top royalty +4 (99 pair)
+    // B top royalty +3 (88 pair)
+    // A total: 3 + 3 + 4 = 10
+    // B total: -3 + 0 + 3 = 0
+    expect(aTotal, 10);
+    expect(bTotal, 0);
   });
 }
