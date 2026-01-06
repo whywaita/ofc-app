@@ -3,6 +3,7 @@ import 'package:test/test.dart';
 import 'package:ofc_app_core/features/game/domain/board.dart';
 import 'package:ofc_app_core/features/game/domain/foul_checker.dart';
 import 'package:ofc_app_core/features/game/domain/game_options.dart';
+import 'package:ofc_app_core/features/game/domain/hand_category5.dart';
 import 'helpers.dart';
 
 void main() {
@@ -64,6 +65,23 @@ void main() {
       final e = BoardEval.from(b, wildMode: WildMode.deuces);
       // Top should be pair (66 with kicker) not trips
       // Because trips 6s > pair of 7s (foul), but pair of 6s < pair of 7s (no foul)
+      expect(FoulChecker.isFoul(e), isFalse);
+    });
+
+    test('Deuces in middle should optimize to not exceed bottom', () {
+      // Top: As Qs Qc (pair of Queens)
+      // Middle: 7c 7d 2c 2d 4h (pair of 7s + two deuces + 4)
+      // Bottom: 8s 8d 6c 6h Ac (two pair: 8s and 6s)
+      // Without optimization: middle would be Four 7s (7777), which > bottom (foul)
+      // With optimization: middle should be Two Pair (7766), which < bottom (no foul)
+      final b = Board(
+        top: [c('As'), c('Qs'), c('Qc')],
+        middle: [c('7c'), c('7d'), c('2c'), c('2d'), c('4h')],
+        bottom: [c('8s'), c('8d'), c('6c'), c('6h'), c('Ac')],
+      );
+      final e = BoardEval.from(b, wildMode: WildMode.deuces);
+      // Middle should be optimized to Two Pair (7766) instead of Four 7s
+      expect(e.middle.category, Hand5Category.twoPair);
       expect(FoulChecker.isFoul(e), isFalse);
     });
   });

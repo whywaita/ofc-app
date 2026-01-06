@@ -21,15 +21,17 @@ class BoardEval {
 
   factory BoardEval.from(Board b, {WildMode wildMode = WildMode.none}) {
     if (wildMode == WildMode.deuces) {
-      final middle = HandEvaluator.evaluate5DeucesWild(b.middle);
       final bottom = HandEvaluator.evaluate5DeucesWild(b.bottom);
+      // Optimize middle with context-awareness to avoid foul
+      final middle = _optimizeMiddleDeucesWild(b.middle, bottom);
       // Optimize top with context-awareness to avoid foul
       final top = _optimizeTopDeucesWild(b.top, middle);
       return BoardEval(top: top, middle: middle, bottom: bottom);
     }
     if (wildMode == WildMode.joker) {
-      final middle = HandEvaluator.evaluate5JokerWild(b.middle);
       final bottom = HandEvaluator.evaluate5JokerWild(b.bottom);
+      // Optimize middle with context-awareness to avoid foul
+      final middle = _optimizeMiddleJokerWild(b.middle, bottom);
       // Optimize top with context-awareness to avoid foul
       final top = _optimizeTopJokerWild(b.top, middle);
       return BoardEval(top: top, middle: middle, bottom: bottom);
@@ -288,5 +290,328 @@ class BoardEval {
     }
 
     return null; // No alternative found
+  }
+
+  /// Optimize middle hand with deuces to avoid foul when possible.
+  /// Tries the best evaluation first, then finds alternatives if it would cause foul.
+  static Hand5Rank _optimizeMiddleDeucesWild(
+      List<PlayingCard> middleCards, Hand5Rank bottom) {
+    final deuceCount = middleCards.where((c) => c.rank == Rank.two).length;
+    if (deuceCount == 0) {
+      // No deuces, just evaluate normally
+      return HandEvaluator.evaluate5DeucesWild(middleCards);
+    }
+
+    final nonDeuces = middleCards.where((c) => c.rank != Rank.two).toList();
+
+    // Try best evaluation first
+    final bestEval = HandEvaluator.evaluate5DeucesWild(middleCards);
+    if (_compare5(bestEval, bottom) <= 0) {
+      // middle <= bottom, no foul
+      return bestEval;
+    }
+
+    // Best eval would cause foul (middle > bottom); try to find alternative
+    final alternativeEval =
+        _findNonFoulingEval5Deuces(nonDeuces, deuceCount, bottom);
+    return alternativeEval ?? bestEval;
+  }
+
+  /// Optimize middle hand with jokers to avoid foul when possible.
+  static Hand5Rank _optimizeMiddleJokerWild(
+      List<PlayingCard> middleCards, Hand5Rank bottom) {
+    final jokerCount = middleCards.where((c) => c.isJoker).length;
+    if (jokerCount == 0) {
+      // No jokers, just evaluate normally
+      return HandEvaluator.evaluate5JokerWild(middleCards);
+    }
+
+    final nonJokers = middleCards.where((c) => !c.isJoker).toList();
+
+    // Try best evaluation first
+    final bestEval = HandEvaluator.evaluate5JokerWild(middleCards);
+    if (_compare5(bestEval, bottom) <= 0) {
+      // middle <= bottom, no foul
+      return bestEval;
+    }
+
+    // Best eval would cause foul (middle > bottom); try to find alternative
+    final alternativeEval =
+        _findNonFoulingEval5Jokers(nonJokers, jokerCount, bottom);
+    return alternativeEval ?? bestEval;
+  }
+
+  /// Find a non-fouling evaluation for middle hand with deuces
+  static Hand5Rank? _findNonFoulingEval5Deuces(
+      List<PlayingCard> nonDeuces, int deuceCount, Hand5Rank bottom) {
+    final ranks = nonDeuces.map((c) => c.rank!.value).toList()..sort();
+
+    // Count non-deuce ranks
+    final counts = <int, int>{};
+    for (final r in ranks) {
+      counts[r] = (counts[r] ?? 0) + 1;
+    }
+    final maxCount =
+        counts.isEmpty ? 0 : counts.values.reduce((a, b) => a > b ? a : b);
+
+    // Try different hand categories from high to low
+    // But skip categories that would exceed bottom
+
+    // Try Full House if bottom is Full House or lower
+    if (bottom.category.index <= Hand5Category.fullHouse.index) {
+      // Try to make a full house with deuces
+      if (maxCount >= 2) {
+        final pairRanks =
+            counts.entries.where((e) => e.value >= 2).map((e) => e.key).toList()
+              ..sort((a, b) => b - a);
+        if (pairRanks.length >= 2) {
+          // Two natural pairs + deuce can make full house
+          // Use deuces to boost one pair to trips
+          final threeRank = pairRanks[0];
+          final pairRank = pairRanks[1];
+          final fhEval = Hand5Rank(
+              Hand5Category.fullHouse, [threeRank, pairRank],
+              isWild: true);
+          if (_compare5(fhEval, bottom) <= 0) {
+            return fhEval;
+          }
+        }
+      }
+    }
+
+    // Note: Straight checking is complex with private methods
+    // For now, we skip straight optimization and focus on other hand types
+
+    // Try Three of a Kind if bottom is Three of a Kind or lower
+    if (bottom.category.index <= Hand5Category.threeOfAKind.index) {
+      if (maxCount + deuceCount >= 3) {
+        int threeRank = 0;
+        for (final entry in counts.entries) {
+          if (entry.value + deuceCount >= 3 && entry.key > threeRank) {
+            threeRank = entry.key;
+          }
+        }
+        if (threeRank == 0 && deuceCount >= 3) {
+          threeRank = 14; // Ace
+        }
+        if (threeRank > 0) {
+          final kickers = ranks.where((r) => r != threeRank).toList()
+            ..sort((a, b) => b - a);
+          while (kickers.length < 2) {
+            kickers.add(14);
+          }
+          final threeEval = Hand5Rank(
+              Hand5Category.threeOfAKind, [threeRank, ...kickers.take(2)],
+              isWild: true);
+          if (_compare5(threeEval, bottom) <= 0) {
+            return threeEval;
+          }
+        }
+      }
+    }
+
+    // Try Two Pair if bottom is Two Pair or lower
+    if (bottom.category.index <= Hand5Category.twoPair.index) {
+      // Try to make two pair with deuces
+      // We need at least one natural pair, and deuces can form the second pair
+      final pairRanks =
+          counts.entries.where((e) => e.value >= 2).map((e) => e.key).toList()
+            ..sort((a, b) => b - a);
+
+      if (pairRanks.isNotEmpty && deuceCount >= 2) {
+        // One natural pair + 2 deuces form another pair
+        // Choose the best second pair rank that doesn't exceed bottom
+        final firstPair = pairRanks[0];
+
+        // Try different second pair ranks from high to low
+        for (int secondPair = 14; secondPair >= 3; secondPair--) {
+          if (secondPair == firstPair) continue; // Must be different ranks
+
+          // Determine the pair order (higher first)
+          final highPair = firstPair > secondPair ? firstPair : secondPair;
+          final lowPair = firstPair > secondPair ? secondPair : firstPair;
+
+          final kickers = ranks
+              .where((r) => r != firstPair && r != secondPair)
+              .toList()
+            ..sort((a, b) => b - a);
+          final kicker = kickers.isEmpty ? 14 : kickers.first;
+
+          final twoPairEval = Hand5Rank(
+              Hand5Category.twoPair, [highPair, lowPair, kicker],
+              isWild: true);
+          if (_compare5(twoPairEval, bottom) <= 0) {
+            return twoPairEval;
+          }
+        }
+      }
+
+      if (pairRanks.length >= 2) {
+        // Two natural pairs
+        final kickers = ranks
+            .where((r) => !pairRanks.contains(r))
+            .toList()
+          ..sort((a, b) => b - a);
+        final kicker = kickers.isEmpty ? 14 : kickers.first;
+        final twoPairEval = Hand5Rank(
+            Hand5Category.twoPair, [pairRanks[0], pairRanks[1], kicker],
+            isWild: true);
+        if (_compare5(twoPairEval, bottom) <= 0) {
+          return twoPairEval;
+        }
+      }
+    }
+
+    // Try One Pair if bottom is One Pair or lower
+    if (bottom.category.index <= Hand5Category.onePair.index) {
+      if (deuceCount >= 1) {
+        final highestNonDeuce =
+            ranks.isEmpty ? 0 : ranks.reduce((a, b) => a > b ? a : b);
+        final pairRank = highestNonDeuce > 0 ? highestNonDeuce : 14;
+        final kickers = ranks.where((r) => r != pairRank).toList()
+          ..sort((a, b) => b - a);
+        while (kickers.length < 3) {
+          kickers.add(14);
+        }
+        final pairEval = Hand5Rank(
+            Hand5Category.onePair, [pairRank, ...kickers.take(3)],
+            isWild: true);
+        if (_compare5(pairEval, bottom) <= 0) {
+          return pairEval;
+        }
+      }
+    }
+
+    return null; // No alternative found
+  }
+
+  /// Find a non-fouling evaluation for middle hand with jokers
+  static Hand5Rank? _findNonFoulingEval5Jokers(
+      List<PlayingCard> nonJokers, int jokerCount, Hand5Rank bottom) {
+    final ranks = nonJokers.map((c) => c.rank!.value).toList()..sort();
+
+    // Count non-joker ranks
+    final counts = <int, int>{};
+    for (final r in ranks) {
+      counts[r] = (counts[r] ?? 0) + 1;
+    }
+    final maxCount =
+        counts.isEmpty ? 0 : counts.values.reduce((a, b) => a > b ? a : b);
+
+    // Try different hand categories from high to low
+    // But skip categories that would exceed bottom
+
+    // Try Full House if bottom is Full House or lower
+    if (bottom.category.index <= Hand5Category.fullHouse.index) {
+      if (maxCount >= 2) {
+        final pairRanks =
+            counts.entries.where((e) => e.value >= 2).map((e) => e.key).toList()
+              ..sort((a, b) => b - a);
+        if (pairRanks.length >= 2) {
+          final threeRank = pairRanks[0];
+          final pairRank = pairRanks[1];
+          final fhEval = Hand5Rank(
+              Hand5Category.fullHouse, [threeRank, pairRank],
+              isWild: true);
+          if (_compare5(fhEval, bottom) <= 0) {
+            return fhEval;
+          }
+        }
+      }
+    }
+
+    // Note: Straight checking is complex with private methods
+    // For now, we skip straight optimization and focus on other hand types
+
+    // Try Three of a Kind if bottom is Three of a Kind or lower
+    if (bottom.category.index <= Hand5Category.threeOfAKind.index) {
+      if (maxCount + jokerCount >= 3) {
+        int threeRank = 0;
+        for (final entry in counts.entries) {
+          if (entry.value + jokerCount >= 3 && entry.key > threeRank) {
+            threeRank = entry.key;
+          }
+        }
+        if (threeRank == 0 && jokerCount >= 3) {
+          threeRank = 14;
+        }
+        if (threeRank > 0) {
+          final kickers = ranks.where((r) => r != threeRank).toList()
+            ..sort((a, b) => b - a);
+          while (kickers.length < 2) {
+            kickers.add(14);
+          }
+          final threeEval = Hand5Rank(
+              Hand5Category.threeOfAKind, [threeRank, ...kickers.take(2)],
+              isWild: true);
+          if (_compare5(threeEval, bottom) <= 0) {
+            return threeEval;
+          }
+        }
+      }
+    }
+
+    // Try Two Pair if bottom is Two Pair or lower
+    if (bottom.category.index <= Hand5Category.twoPair.index) {
+      final pairRanks =
+          counts.entries.where((e) => e.value >= 2).map((e) => e.key).toList()
+            ..sort((a, b) => b - a);
+
+      if (pairRanks.isNotEmpty && jokerCount >= 2) {
+        final firstPair = pairRanks[0];
+        for (int secondPair = 14; secondPair >= 3; secondPair--) {
+          if (secondPair == firstPair) continue;
+          final highPair = firstPair > secondPair ? firstPair : secondPair;
+          final lowPair = firstPair > secondPair ? secondPair : firstPair;
+          final kickers = ranks
+              .where((r) => r != firstPair && r != secondPair)
+              .toList()
+            ..sort((a, b) => b - a);
+          final kicker = kickers.isEmpty ? 14 : kickers.first;
+          final twoPairEval = Hand5Rank(
+              Hand5Category.twoPair, [highPair, lowPair, kicker],
+              isWild: true);
+          if (_compare5(twoPairEval, bottom) <= 0) {
+            return twoPairEval;
+          }
+        }
+      }
+
+      if (pairRanks.length >= 2) {
+        final kickers = ranks
+            .where((r) => !pairRanks.contains(r))
+            .toList()
+          ..sort((a, b) => b - a);
+        final kicker = kickers.isEmpty ? 14 : kickers.first;
+        final twoPairEval = Hand5Rank(
+            Hand5Category.twoPair, [pairRanks[0], pairRanks[1], kicker],
+            isWild: true);
+        if (_compare5(twoPairEval, bottom) <= 0) {
+          return twoPairEval;
+        }
+      }
+    }
+
+    // Try One Pair if bottom is One Pair or lower
+    if (bottom.category.index <= Hand5Category.onePair.index) {
+      if (jokerCount >= 1) {
+        final highestNonJoker =
+            ranks.isEmpty ? 0 : ranks.reduce((a, b) => a > b ? a : b);
+        final pairRank = highestNonJoker > 0 ? highestNonJoker : 14;
+        final kickers = ranks.where((r) => r != pairRank).toList()
+          ..sort((a, b) => b - a);
+        while (kickers.length < 3) {
+          kickers.add(14);
+        }
+        final pairEval = Hand5Rank(
+            Hand5Category.onePair, [pairRank, ...kickers.take(3)],
+            isWild: true);
+        if (_compare5(pairEval, bottom) <= 0) {
+          return pairEval;
+        }
+      }
+    }
+
+    return null;
   }
 }
