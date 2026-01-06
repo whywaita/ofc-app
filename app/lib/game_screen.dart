@@ -211,6 +211,31 @@ class _GameScreenState extends State<GameScreen> {
     return 'Practice';
   }
 
+  Future<bool> _onWillPop() async {
+    // If game is in progress, show confirmation dialog
+    if (_eng != null && _eng!.phase == Phase.placing) {
+      final shouldPop = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Discard game?'),
+          content: const Text('Your current game progress will be lost. Are you sure you want to go back?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Discard'),
+            ),
+          ],
+        ),
+      );
+      return shouldPop ?? false;
+    }
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final eng = _eng;
@@ -227,7 +252,9 @@ class _GameScreenState extends State<GameScreen> {
     final screenSize = MediaQuery.of(context).size;
     final isSmallScreen = screenSize.width < 600;
 
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
       appBar: AppBar(
         title: Text(_modeTitle()),
         centerTitle: true,
@@ -395,6 +422,7 @@ class _GameScreenState extends State<GameScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
