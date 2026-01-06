@@ -67,6 +67,15 @@
 - Conventional Commits（例: `feat(game): unify next3 button`）。小さく分割し CI グリーンで提出。
 - PR には目的/変更点/テスト結果、UI変更はスクショを添付。
 
+## プラットフォーム優先順位
+
+**Web が最優先プラットフォーム**。続いて Android/iOS の順。
+
+機能実装やバグ修正時は:
+1. まず Web で正しく動作することを確認
+2. 次に Android/iOS で確認
+
+※ macos/windows/linux は削除済
+
 ## 署名/セキュリティ
 - 機密情報はコミット禁止。iOS 実機は Xcode で Team を選択し自動署名（`make app-ios-open`）。
-- 対応プラットフォーム: Android/iOS/Web（macos/windows/linux は削除済）。
