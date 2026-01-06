@@ -211,29 +211,27 @@ class _GameScreenState extends State<GameScreen> {
     return 'Practice';
   }
 
-  Future<bool> _onWillPop() async {
-    // If game is in progress, show confirmation dialog
-    if (_eng != null && _eng!.phase == Phase.placing) {
-      final shouldPop = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Discard game?'),
-          content: const Text('Your current game progress will be lost. Are you sure you want to go back?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Discard'),
-            ),
-          ],
-        ),
-      );
-      return shouldPop ?? false;
+  Future<void> _showDiscardDialog() async {
+    final shouldPop = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Discard game?'),
+        content: const Text('Your current game progress will be lost. Are you sure you want to go back?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Discard'),
+          ),
+        ],
+      ),
+    );
+    if (shouldPop == true && context.mounted) {
+      Navigator.pop(context);
     }
-    return true;
   }
 
   @override
@@ -252,8 +250,14 @@ class _GameScreenState extends State<GameScreen> {
     final screenSize = MediaQuery.of(context).size;
     final isSmallScreen = screenSize.width < 600;
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: !(_eng != null && _eng!.phase == Phase.placing),
+      onPopInvoked: (bool didPop) async {
+        if (didPop) {
+          return;
+        }
+        _showDiscardDialog();
+      },
       child: Scaffold(
       appBar: AppBar(
         title: Text(_modeTitle()),

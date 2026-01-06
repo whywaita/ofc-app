@@ -195,29 +195,27 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
     return 'Pass & Play';
   }
 
-  Future<bool> _onWillPop() async {
-    // If game is in progress, show confirmation dialog
-    if (eng.phase == Phase.placing) {
-      final shouldPop = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Discard game?'),
-          content: const Text('Both players\' game progress will be lost. Are you sure you want to go back?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Discard'),
-            ),
-          ],
-        ),
-      );
-      return shouldPop ?? false;
+  Future<void> _showDiscardDialog() async {
+    final shouldPop = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Discard game?'),
+        content: const Text('Both players\' game progress will be lost. Are you sure you want to go back?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Discard'),
+          ),
+        ],
+      ),
+    );
+    if (shouldPop == true && context.mounted) {
+      Navigator.pop(context);
     }
-    return true;
   }
 
   @override
@@ -233,8 +231,14 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
     final label =
         isFinal ? 'Commit ${current == Player.a ? '(A)' : '(B)'}' : 'Next 3';
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: !(eng.phase == Phase.placing),
+      onPopInvoked: (bool didPop) async {
+        if (didPop) {
+          return;
+        }
+        _showDiscardDialog();
+      },
       child: Scaffold(
       appBar: AppBar(title: Text(_modeTitle())),
       body: Padding(
