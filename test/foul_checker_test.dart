@@ -3,6 +3,7 @@ import 'package:test/test.dart';
 import 'package:ofc_app_core/features/game/domain/board.dart';
 import 'package:ofc_app_core/features/game/domain/foul_checker.dart';
 import 'package:ofc_app_core/features/game/domain/game_options.dart';
+import 'package:ofc_app_core/features/game/domain/hand_category5.dart';
 import 'helpers.dart';
 
 void main() {
