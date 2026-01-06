@@ -1,14 +1,12 @@
-import 'dart:io';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ofc_app_core/core/models/playing_card.dart';
 import 'package:ofc_app_core/features/game/domain/cycle_logic.dart';
 import 'package:ofc_app_core/features/game/domain/game_options.dart';
 import 'package:ofc_app_core/features/game/domain/game_state.dart';
 import 'package:ofc_app_core/features/game/domain/pineapple_engine.dart';
-import 'pass_play_result.dart';
 import 'package:ofc_app_core/features/game/domain/score_engine.dart';
+import 'pass_play_result.dart';
+import 'utils/navigation_utils.dart';
 import 'widgets/card_widget.dart';
 
 class PassPlayScreen extends StatefulWidget {
@@ -146,25 +144,16 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
       final vs = gs.lastScore ??
           ScoreEngine.compare(gs.boardA!, gs.boardB!, wildMode: wildMode);
       final _ = await Navigator.of(context).push<bool>(
-        !kIsWeb && Platform.isIOS
-            ? CupertinoPageRoute(
-                builder: (_) => PassPlayResult(
-                    score: vs,
-                    boardA: gs.boardA!,
-                    boardB: gs.boardB!,
-                    nextFantasyA: nextFantasyA,
-                    nextFantasyB: nextFantasyB,
-                    wildMode: wildMode),
-              )
-            : MaterialPageRoute(
-                builder: (_) => PassPlayResult(
-                    score: vs,
-                    boardA: gs.boardA!,
-                    boardB: gs.boardB!,
-                    nextFantasyA: nextFantasyA,
-                    nextFantasyB: nextFantasyB,
-                    wildMode: wildMode),
-              ),
+        adaptiveRoute(
+          (_) => PassPlayResult(
+            score: vs,
+            boardA: gs.boardA!,
+            boardB: gs.boardB!,
+            nextFantasyA: nextFantasyA,
+            nextFantasyB: nextFantasyB,
+            wildMode: wildMode,
+          ),
+        ),
       );
       // Next hand: 個別Dealし、Fantasyのない側から開始
       setState(() {
@@ -208,25 +197,13 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
     return 'Pass & Play';
   }
 
-  Future<void> _showDiscardDialog() async {
-    final shouldPop = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Discard game?'),
-        content: const Text('Both players\' game progress will be lost. Are you sure you want to go back?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Discard'),
-          ),
-        ],
-      ),
+  Future<void> _handleBackPress() async {
+    final shouldPop = await showDiscardConfirmationDialog(
+      context,
+      content:
+          "Both players' game progress will be lost. Are you sure you want to go back?",
     );
-    if (shouldPop == true && context.mounted) {
+    if (shouldPop && context.mounted) {
       Navigator.pop(context);
     }
   }
@@ -245,125 +222,123 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
         isFinal ? 'Commit ${current == Player.a ? '(A)' : '(B)'}' : 'Next 3';
 
     return PopScope(
-      canPop: !(eng.phase == Phase.placing),
-      onPopInvoked: (bool didPop) async {
-        if (didPop) {
-          return;
-        }
-        _showDiscardDialog();
+      canPop: eng.phase != Phase.placing,
+      onPopInvokedWithResult: (bool didPop, _) {
+        if (didPop) return;
+        _handleBackPress();
       },
       child: Scaffold(
-      appBar: AppBar(title: Text(_modeTitle())),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('Turn: ${current == Player.a ? 'Player A' : 'Player B'}',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text('Status: $status', textAlign: TextAlign.center),
-            const Divider(),
-            _drop('Top', top, 3, Slot.top),
-            const SizedBox(height: 8),
-            _drop('Middle', middle, 5, Slot.middle),
-            const SizedBox(height: 8),
-            _drop('Bottom', bottom, 5, Slot.bottom),
-            const Divider(),
-            // Tray (DragTarget to allow back)
-            DragTarget<PlayingCard>(
-              onWillAcceptWithDetails: (d) {
-                if (eng.phase != Phase.placing) return false;
-                if (eng.tray.contains(d.data)) return false;
-                return ids.contains(d.data.toString());
-              },
-              onAcceptWithDetails: (d) => setState(() {
-                eng.returnToTray(d.data);
-                status = 'Back to Tray';
-              }),
-              builder: (context, cand, _) => Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+        appBar: AppBar(title: Text(_modeTitle())),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('Turn: ${current == Player.a ? 'Player A' : 'Player B'}',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Text('Status: $status', textAlign: TextAlign.center),
+              const Divider(),
+              _drop('Top', top, 3, Slot.top),
+              const SizedBox(height: 8),
+              _drop('Middle', middle, 5, Slot.middle),
+              const SizedBox(height: 8),
+              _drop('Bottom', bottom, 5, Slot.bottom),
+              const Divider(),
+              // Tray (DragTarget to allow back)
+              DragTarget<PlayingCard>(
+                onWillAcceptWithDetails: (d) {
+                  if (eng.phase != Phase.placing) return false;
+                  if (eng.tray.contains(d.data)) return false;
+                  return ids.contains(d.data.toString());
+                },
+                onAcceptWithDetails: (d) => setState(() {
+                  eng.returnToTray(d.data);
+                  status = 'Back to Tray';
+                }),
+                builder: (context, cand, _) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('Tray (${tray.length})', textAlign: TextAlign.center),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final c in tray)
+                          Draggable<PlayingCard>(
+                            data: c,
+                            feedback: Material(
+                                color: Colors.transparent,
+                                child: _card(c, large: true)),
+                            childWhenDragging:
+                                Opacity(opacity: 0.3, child: _card(c)),
+                            child: _card(c),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
                 children: [
-                  Text('Tray (${tray.length})', textAlign: TextAlign.center),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      for (final c in tray)
-                        Draggable<PlayingCard>(
-                          data: c,
-                          feedback: Material(
-                              color: Colors.transparent,
-                              child: _card(c, large: true)),
-                          childWhenDragging:
-                              Opacity(opacity: 0.3, child: _card(c)),
-                          child: _card(c),
-                        ),
-                    ],
+                  if (eng.initialDrawCount > 5)
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: tray.length >= 2
+                            ? () => setState(() {
+                                  eng.sortTray((a, b) {
+                                    // Handle jokers: put them at the end
+                                    if (a.isJoker && b.isJoker) return 0;
+                                    if (a.isJoker) return 1;
+                                    if (b.isJoker) return -1;
+
+                                    final rv =
+                                        b.rank!.value.compareTo(a.rank!.value);
+                                    if (rv != 0) return rv;
+                                    int suitOrder(String s) => switch (s) {
+                                          'spades' => 3,
+                                          'hearts' => 2,
+                                          'diamonds' => 1,
+                                          _ => 0,
+                                        };
+                                    return suitOrder(b.suit!.name) -
+                                        suitOrder(a.suit!.name);
+                                  });
+                                  status = 'Sorted';
+                                })
+                            : null,
+                        child: const Text('Sort'),
+                      ),
+                    ),
+                  if (eng.initialDrawCount > 5) const SizedBox(width: 0),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: isFinal
+                          ? _onPrimaryButton
+                          : (canNext ? _onPrimaryButton : null),
+                      child: Text(label),
+                    ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                if (eng.initialDrawCount > 5)
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: tray.length >= 2
-                          ? () => setState(() {
-                                eng.sortTray((a, b) {
-                                  // Handle jokers: put them at the end
-                                  if (a.isJoker && b.isJoker) return 0;
-                                  if (a.isJoker) return 1;
-                                  if (b.isJoker) return -1;
-
-                                  final rv =
-                                      b.rank!.value.compareTo(a.rank!.value);
-                                  if (rv != 0) return rv;
-                                  int suitOrder(String s) => switch (s) {
-                                        'spades' => 3,
-                                        'hearts' => 2,
-                                        'diamonds' => 1,
-                                        _ => 0,
-                                      };
-                                  return suitOrder(b.suit!.name) -
-                                      suitOrder(a.suit!.name);
-                                });
-                                status = 'Sorted';
-                              })
-                          : null,
-                      child: const Text('Sort'),
-                    ),
-                  ),
-                if (eng.initialDrawCount > 5) const SizedBox(width: 0),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: isFinal
-                        ? _onPrimaryButton
-                        : (canNext ? _onPrimaryButton : null),
-                    child: Text(label),
-                  ),
+              const SizedBox(height: 8),
+              if (eng.discards.isNotEmpty) ...[
+                Text('Your Discards (${eng.discards.length})',
+                    textAlign: TextAlign.center),
+                const SizedBox(height: 6),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [for (final c in eng.discards) _card(c)],
                 ),
               ],
-            ),
-            const SizedBox(height: 8),
-            if (eng.discards.isNotEmpty) ...[
-              Text('Your Discards (${eng.discards.length})',
-                  textAlign: TextAlign.center),
-              const SizedBox(height: 6),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 6,
-                runSpacing: 6,
-                children: [for (final c in eng.discards) _card(c)],
-              ),
             ],
-          ],
+          ),
         ),
-      ),
       ),
     );
   }
