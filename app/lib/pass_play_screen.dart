@@ -198,13 +198,14 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
   }
 
   Future<void> _handleBackPress() async {
+    final navigator = Navigator.of(context);
     final shouldPop = await showDiscardConfirmationDialog(
       context,
       content:
           "Both players' game progress will be lost. Are you sure you want to go back?",
     );
     if (shouldPop && context.mounted) {
-      Navigator.pop(context);
+      navigator.pop();
     }
   }
 

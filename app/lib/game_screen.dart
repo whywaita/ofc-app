@@ -213,9 +213,10 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   Future<void> _handleBackPress() async {
+    final navigator = Navigator.of(context);
     final shouldPop = await showDiscardConfirmationDialog(context);
     if (shouldPop && context.mounted) {
-      Navigator.pop(context);
+      navigator.pop();
     }
   }
 
