@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ofc_app_core/core/models/deck.dart';
 import 'package:ofc_app_core/core/models/playing_card.dart';
@@ -375,15 +378,25 @@ class _GameScreenState extends State<GameScreen> {
                                       FantasyEngine.nextState(_fantasy, e);
                                   final nextInit =
                                       await Navigator.of(context).push<int>(
-                                    MaterialPageRoute(
-                                      builder: (_) => ResultScreen(
-                                          board: b,
-                                          nextFantasy: next,
-                                          ruleset: _ruleset,
-                                          seed: widget.seed,
-                                          wildMode: wildMode,
-                                          history: List.of(_eng!.history)),
-                                    ),
+                                    !kIsWeb && Platform.isIOS
+                                        ? CupertinoPageRoute(
+                                            builder: (_) => ResultScreen(
+                                                board: b,
+                                                nextFantasy: next,
+                                                ruleset: _ruleset,
+                                                seed: widget.seed,
+                                                wildMode: wildMode,
+                                                history: List.of(_eng!.history)),
+                                          )
+                                        : MaterialPageRoute(
+                                            builder: (_) => ResultScreen(
+                                                board: b,
+                                                nextFantasy: next,
+                                                ruleset: _ruleset,
+                                                seed: widget.seed,
+                                                wildMode: wildMode,
+                                                history: List.of(_eng!.history)),
+                                          ),
                                   );
                                   setState(() {
                                     _fantasy = next;

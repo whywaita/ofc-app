@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ofc_app_core/features/game/domain/game_options.dart';
 import 'game_screen.dart';
@@ -20,6 +23,15 @@ class OfcApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
     );
   }
+}
+
+/// Creates a platform-adaptive route for better PopScope support
+/// iOS uses CupertinoPageRoute for proper swipe-back gesture handling
+Route<T> _adaptiveRoute<T>(WidgetBuilder builder) {
+  if (!kIsWeb && Platform.isIOS) {
+    return CupertinoPageRoute<T>(builder: builder);
+  }
+  return MaterialPageRoute<T>(builder: builder);
 }
 
 class HomePage extends StatefulWidget {
@@ -124,9 +136,8 @@ class _HomePageState extends State<HomePage> {
                     // The seed is passed to GameScreen and displayed on the screen/result screen
                     // ignore: use_build_context_synchronously
                     Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (_) =>
-                              GameScreen(seed: seed, options: _options)),
+                      _adaptiveRoute(
+                          (_) => GameScreen(seed: seed, options: _options)),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -146,8 +157,8 @@ class _HomePageState extends State<HomePage> {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (_) => PassPlayScreen(options: _options)),
+                      _adaptiveRoute(
+                          (_) => PassPlayScreen(options: _options)),
                     );
                   },
                   style: ElevatedButton.styleFrom(

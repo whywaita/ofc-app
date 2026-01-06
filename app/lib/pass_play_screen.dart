@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ofc_app_core/core/models/playing_card.dart';
 import 'package:ofc_app_core/features/game/domain/cycle_logic.dart';
@@ -143,15 +146,25 @@ class _PassPlayScreenState extends State<PassPlayScreen> {
       final vs = gs.lastScore ??
           ScoreEngine.compare(gs.boardA!, gs.boardB!, wildMode: wildMode);
       final _ = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(
-          builder: (_) => PassPlayResult(
-              score: vs,
-              boardA: gs.boardA!,
-              boardB: gs.boardB!,
-              nextFantasyA: nextFantasyA,
-              nextFantasyB: nextFantasyB,
-              wildMode: wildMode),
-        ),
+        !kIsWeb && Platform.isIOS
+            ? CupertinoPageRoute(
+                builder: (_) => PassPlayResult(
+                    score: vs,
+                    boardA: gs.boardA!,
+                    boardB: gs.boardB!,
+                    nextFantasyA: nextFantasyA,
+                    nextFantasyB: nextFantasyB,
+                    wildMode: wildMode),
+              )
+            : MaterialPageRoute(
+                builder: (_) => PassPlayResult(
+                    score: vs,
+                    boardA: gs.boardA!,
+                    boardB: gs.boardB!,
+                    nextFantasyA: nextFantasyA,
+                    nextFantasyB: nextFantasyB,
+                    wildMode: wildMode),
+              ),
       );
       // Next hand: 個別Dealし、Fantasyのない側から開始
       setState(() {
