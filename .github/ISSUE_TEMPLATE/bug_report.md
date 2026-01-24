@@ -1,29 +1,29 @@
 ---
-name: "バグ報告"
-about: "バグ報告用テンプレート"
+name: "Bug report"
+about: "Report a bug"
 title: "[Bug] "
 labels: ["bug"]
 assignees: []
 ---
 
-## 概要
-<!-- 何が起きたのかを一文で -->
+## Summary
+<!-- Briefly describe what happened -->
 
-## 再現手順
+## Steps to Reproduce
 1.
 2.
 3.
 
-## カード設定
+## Card Setup
 - Top:
 - Middle:
 - Bottom:
 
-## 期待する結果
+## Expected Result
 
-## 発生してしまっている結果
+## Actual Result
 
-## 環境
-- 端末/OS:
-- ブラウザ or アプリ版本:
-- その他:
+## Environment
+- Device/OS:
+- Browser or App Version:
+- Other:
