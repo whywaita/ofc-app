@@ -3,6 +3,7 @@ import 'package:test/test.dart';
 import 'package:ofc_app_core/features/game/domain/board.dart';
 import 'package:ofc_app_core/features/game/domain/foul_checker.dart';
 import 'package:ofc_app_core/features/game/domain/game_options.dart';
+import 'package:ofc_app_core/features/game/domain/hand_category3.dart';
 import 'package:ofc_app_core/features/game/domain/hand_category5.dart';
 import 'helpers.dart';
 
@@ -83,6 +84,23 @@ void main() {
       // Middle should be optimized to Two Pair (7766) instead of Four 7s
       expect(e.middle.category, Hand5Category.twoPair);
       expect(FoulChecker.isFoul(e), isFalse);
+    });
+
+    test('Deuces wild still shows best hands when foul is unavoidable', () {
+      // Top: 2s 2h 5h -> best is trips 5s (wild)
+      // Middle: 6h 6c 4h 2c 6s -> best is four of a kind 6s (wild)
+      // Bottom: Ts Qc Jd Qh Tc -> two pair (QQ + TT)
+      final b = Board(
+        top: [c('2s'), c('2h'), c('5h')],
+        middle: [c('6h'), c('6c'), c('4h'), c('2c'), c('6s')],
+        bottom: [c('Ts'), c('Qc'), c('Jd'), c('Qh'), c('Tc')],
+      );
+      final e = BoardEval.from(b, wildMode: WildMode.deuces);
+      expect(FoulChecker.isFoul(e), isTrue);
+      expect(e.top.category, Hand3Category.threeOfAKind);
+      expect(e.top.tiebreakers.first, 5);
+      expect(e.middle.category, Hand5Category.fourOfAKind);
+      expect(e.middle.tiebreakers.first, 6);
     });
   });
 

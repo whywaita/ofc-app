@@ -22,19 +22,31 @@ class BoardEval {
   factory BoardEval.from(Board b, {WildMode wildMode = WildMode.none}) {
     if (wildMode == WildMode.deuces) {
       final bottom = HandEvaluator.evaluate5DeucesWild(b.bottom);
+      final bestMiddle = HandEvaluator.evaluate5DeucesWild(b.middle);
+      final bestTop = HandEvaluator.evaluate3DeucesWild(b.top);
       // Optimize middle with context-awareness to avoid foul
       final middle = _optimizeMiddleDeucesWild(b.middle, bottom);
       // Optimize top with context-awareness to avoid foul
       final top = _optimizeTopDeucesWild(b.top, middle);
-      return BoardEval(top: top, middle: middle, bottom: bottom);
+      final optimized = BoardEval(top: top, middle: middle, bottom: bottom);
+      if (_isFoul(optimized)) {
+        return BoardEval(top: bestTop, middle: bestMiddle, bottom: bottom);
+      }
+      return optimized;
     }
     if (wildMode == WildMode.joker) {
       final bottom = HandEvaluator.evaluate5JokerWild(b.bottom);
+      final bestMiddle = HandEvaluator.evaluate5JokerWild(b.middle);
+      final bestTop = HandEvaluator.evaluate3JokerWild(b.top);
       // Optimize middle with context-awareness to avoid foul
       final middle = _optimizeMiddleJokerWild(b.middle, bottom);
       // Optimize top with context-awareness to avoid foul
       final top = _optimizeTopJokerWild(b.top, middle);
-      return BoardEval(top: top, middle: middle, bottom: bottom);
+      final optimized = BoardEval(top: top, middle: middle, bottom: bottom);
+      if (_isFoul(optimized)) {
+        return BoardEval(top: bestTop, middle: bestMiddle, bottom: bottom);
+      }
+      return optimized;
     }
     return BoardEval(
       top: HandEvaluator.evaluate3(b.top),
@@ -73,6 +85,12 @@ class BoardEval {
   static bool _wouldCauseFoul(Hand3Rank top, Hand5Rank middle) {
     final topAs5 = _asFive(top);
     return _compare5(middle, topAs5) < 0; // middle < top means foul
+  }
+
+  static bool _isFoul(BoardEval e) {
+    final okBottom = _compare5(e.bottom, e.middle) >= 0;
+    final okMiddle = _compare5(e.middle, _asFive(e.top)) >= 0;
+    return !(okBottom && okMiddle);
   }
 
   static Hand5Rank _asFive(Hand3Rank r) {
