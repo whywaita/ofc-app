@@ -17,7 +17,8 @@
 - 整形: `make format`
 - 実行: `make app-run DEVICE="iPhone 15"`（シミュ/実機）／Xcode: `make app-ios-open`
 - Web ビルド: `make app-build-web`（静的ファイル → `app/build/web`）
-- CI: PR/Pushで Dart/Flutter の analyze/test/build（pub キャッシュ最適化済）
+- Web 検証: `make verify-web`（Flutter web をビルドして vlmkit の gate を実行。詳細と限界は `docs/vlmkit.md`）
+- CI: PR/Pushで Dart/Flutter の analyze/test/build（pub キャッシュ最適化済）／vlmkit の Web 検証は `verify-web.yml`
 
 ## 実装ルール・コーディング
 - Dart 標準（2スペース/Null-safety）。`package:lints` を適用。命名は `lower_snake_case`/`PascalCase`/`lowerCamelCase`。

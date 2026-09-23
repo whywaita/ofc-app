@@ -1,4 +1,4 @@
-.PHONY: help analyze test build ci format app-run app-analyze app-test app-build app-build-web app-build-web-pages core-analyze core-test app-ios-open
+.PHONY: help analyze test build ci format app-run app-analyze app-test app-build app-build-web app-build-web-pages core-analyze core-test app-ios-open verify-web verify-web-list verify-web-setup verify-web-suppressions serve-web-verify
 
 DART ?= dart
 FLUTTER ?= flutter
@@ -17,6 +17,12 @@ help:
 	@echo "  make app-build-web # flutter build web (static files -> app/build/web)"
 	@echo "  make app-build-web-pages BASE_HREF=/repo/ # flutter build web with base-href for GitHub Pages"
 	@echo "  make app-ios-open  # Xcode workspace を開く (app/ios/Runner.xcworkspace)"
+	@echo "  make verify-web-setup # npm ci + playwright chromium (初回のみ)"
+	@echo "  make verify-web    # flutter build web + vlmkit gates (docs/vlmkit.md)"
+	@echo "  make verify-web-list # 実行される gate 一覧 (サーバは起動しない)"
+	@echo "  make serve-web-verify # 検証用サーバだけ起動 (手動で触る用)"
+	@echo "  make contrast-audit # ピクセル実測の WCAG コントラスト検査 (docs/vlmkit.md)"
+	@echo "  make vision-review  # 画面を VLM に講評させる (OPENCODE_GO_API_KEY 必須、CI 外)"
 
 analyze: core-analyze app-analyze
 
@@ -56,3 +62,44 @@ app-run:
 
 app-ios-open:
 	cd $(APP_DIR) && open ios/Runner.xcworkspace
+
+# --- Web verification (vlmkit) ---
+# vlmkit measures the DOM; a Flutter web build renders into a canvas, so the DOM is empty
+# until the accessibility tree is switched on. tools/vlmkit/serve-web.mjs does that when it
+# serves the bundle, which is why these targets do not use a plain static server.
+# See docs/vlmkit.md for what each gate can and cannot see.
+NODE ?= node
+
+verify-web-setup:
+	npm ci
+	npx playwright install chromium
+
+verify-web-list:
+	npx vlmkit gates list
+
+verify-web-suppressions:
+	npx vlmkit gates suppressions
+
+serve-web-verify: app-build-web
+	$(NODE) tools/vlmkit/serve-web.mjs
+
+# Pixel-measured WCAG contrast. Starts its own server and kills it afterwards; pass
+# CONTRAST_ARGS="--click Practice --click Start" to audit a deeper screen (docs/vlmkit.md).
+contrast-audit: app-build-web
+	@node tools/vlmkit/serve-web.mjs & \
+	server=$$!; \
+	trap 'kill $$server 2>/dev/null' EXIT; \
+	sleep 2; \
+	node tools/vlmkit/contrast-audit.mjs $(CONTRAST_ARGS)
+
+# Vision review of a screen. Needs OPENCODE_GO_API_KEY in the environment; without it the script
+# exits 2 and prints why. Not part of `make verify-web` — CI stays key-free (docs/vlmkit.md).
+vision-review: app-build-web
+	@node tools/vlmkit/serve-web.mjs & \
+	server=$$!; \
+	trap 'kill $$server 2>/dev/null' EXIT; \
+	sleep 2; \
+	node tools/vlmkit/vision-review.mjs $(VISION_ARGS)
+
+verify-web: app-build-web
+	npx vlmkit gates run

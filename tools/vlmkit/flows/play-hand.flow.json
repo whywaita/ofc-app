@@ -1,0 +1,708 @@
+{
+  "//": "Plays one whole hand in the web build with clicks only: no dragging, no injected state. Before the tap path existed this was impossible - a card could only be moved by dragging and the flow vocabulary has no drag step, so nothing outside the tray was ever reachable. The seed is pinned and the plan is the one the domain produces for it (see app/test/play_through_test.dart), so the outcome is fixed: top Qd/6h/8h, middle 5d/Qh/Qs/Td/8d, bottom 3c/Js/3h/4h/Ac, which fouls.",
+  "viewport": {
+    "width": 375,
+    "height": 812
+  },
+  "steps": [
+    {
+      "label": "home: the entry points are exposed",
+      "do": {
+        "action": "wait",
+        "ms": 4000
+      },
+      "expect": [
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "Open Face Chinese Poker"
+        },
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "Practice"
+        }
+      ]
+    },
+    {
+      "label": "Practice",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:has-text(\"Practice\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "the seed dialog opens",
+      "do": {
+        "action": "wait",
+        "ms": 1500
+      },
+      "expect": [
+        {
+          "assert": "text",
+          "selector": "flt-semantics[role=\"alertdialog\"]",
+          "contains": "Choose Practice Seed"
+        },
+        {
+          "assert": "text",
+          "selector": "flt-semantics[role=\"alertdialog\"]",
+          "contains": "Specify"
+        }
+      ]
+    },
+    {
+      "label": "Specify, so the hand below is reproducible",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:has-text(\"Specify\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "seed 7",
+      "do": {
+        "action": "fill",
+        "selector": "input[aria-label=\"Seed (integer)\"]",
+        "value": "7"
+      },
+      "expect": []
+    },
+    {
+      "label": "Start",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:has-text(\"Start\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "the five-card deal lands in the tray",
+      "do": {
+        "action": "wait",
+        "ms": 2500
+      },
+      "expect": [
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "Status: Dealt 5"
+        },
+        {
+          "assert": "attr",
+          "selector": "flt-semantics[aria-label^=\"Tray\"]",
+          "name": "aria-label",
+          "equals": "Tray (5)"
+        },
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "Seed: 7"
+        }
+      ]
+    },
+    {
+      "label": "pick up 3 of clubs",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"3 of clubs\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "place 3 of clubs in Bottom",
+      "do": {
+        "action": "wait",
+        "ms": 250
+      },
+      "expect": []
+    },
+    {
+      "label": "drop 3 of clubs on Bottom",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"Place in Bottom (5 max)\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "settle after 3 of clubs",
+      "do": {
+        "action": "wait",
+        "ms": 350
+      },
+      "expect": []
+    },
+    {
+      "label": "pick up J of spades",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"J of spades\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "place J of spades in Bottom",
+      "do": {
+        "action": "wait",
+        "ms": 250
+      },
+      "expect": []
+    },
+    {
+      "label": "drop J of spades on Bottom",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"Place in Bottom (5 max)\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "settle after J of spades",
+      "do": {
+        "action": "wait",
+        "ms": 350
+      },
+      "expect": []
+    },
+    {
+      "label": "pick up 3 of hearts",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"3 of hearts\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "place 3 of hearts in Bottom",
+      "do": {
+        "action": "wait",
+        "ms": 250
+      },
+      "expect": []
+    },
+    {
+      "label": "drop 3 of hearts on Bottom",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"Place in Bottom (5 max)\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "settle after 3 of hearts",
+      "do": {
+        "action": "wait",
+        "ms": 350
+      },
+      "expect": []
+    },
+    {
+      "label": "pick up 4 of hearts",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"4 of hearts\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "place 4 of hearts in Bottom",
+      "do": {
+        "action": "wait",
+        "ms": 250
+      },
+      "expect": []
+    },
+    {
+      "label": "drop 4 of hearts on Bottom",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"Place in Bottom (5 max)\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "settle after 4 of hearts",
+      "do": {
+        "action": "wait",
+        "ms": 350
+      },
+      "expect": []
+    },
+    {
+      "label": "pick up A of clubs",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"A of clubs\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "place A of clubs in Bottom",
+      "do": {
+        "action": "wait",
+        "ms": 250
+      },
+      "expect": []
+    },
+    {
+      "label": "drop A of clubs on Bottom",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"Place in Bottom (5 max)\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "settle after A of clubs",
+      "do": {
+        "action": "wait",
+        "ms": 350
+      },
+      "expect": []
+    },
+    {
+      "label": "the deal of five is placed whole",
+      "do": {
+        "action": "wait",
+        "ms": 400
+      },
+      "expect": [
+        {
+          "assert": "count",
+          "selector": "flt-semantics[aria-label^=\"Tray\"]",
+          "equals": 0
+        },
+        {
+          "assert": "count",
+          "selector": "flt-semantics[role=\"button\"][aria-disabled=\"true\"]",
+          "equals": 0
+        },
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "Status: Placed"
+        }
+      ]
+    },
+    {
+      "label": "Next 3",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:has-text(\"Next 3\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "the next three arrive",
+      "do": {
+        "action": "wait",
+        "ms": 1500
+      },
+      "expect": [
+        {
+          "assert": "attr",
+          "selector": "flt-semantics[aria-label^=\"Tray\"]",
+          "name": "aria-label",
+          "equals": "Tray (3)"
+        },
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "Status: Drew 3"
+        }
+      ]
+    },
+    {
+      "label": "pick up 5 of diamonds",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"5 of diamonds\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "place 5 of diamonds in Middle",
+      "do": {
+        "action": "wait",
+        "ms": 250
+      },
+      "expect": []
+    },
+    {
+      "label": "drop 5 of diamonds on Middle",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"Place in Middle (5 max)\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "settle after 5 of diamonds",
+      "do": {
+        "action": "wait",
+        "ms": 350
+      },
+      "expect": []
+    },
+    {
+      "label": "pick up Q of hearts",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"Q of hearts\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "place Q of hearts in Middle",
+      "do": {
+        "action": "wait",
+        "ms": 250
+      },
+      "expect": []
+    },
+    {
+      "label": "drop Q of hearts on Middle",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"Place in Middle (5 max)\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "settle after Q of hearts",
+      "do": {
+        "action": "wait",
+        "ms": 350
+      },
+      "expect": []
+    },
+    {
+      "label": "Next 3",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:has-text(\"Next 3\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "the next three arrive",
+      "do": {
+        "action": "wait",
+        "ms": 1500
+      },
+      "expect": [
+        {
+          "assert": "attr",
+          "selector": "flt-semantics[aria-label^=\"Tray\"]",
+          "name": "aria-label",
+          "equals": "Tray (3)"
+        },
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "Status: Drew 3"
+        }
+      ]
+    },
+    {
+      "label": "pick up Q of spades",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"Q of spades\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "place Q of spades in Middle",
+      "do": {
+        "action": "wait",
+        "ms": 250
+      },
+      "expect": []
+    },
+    {
+      "label": "drop Q of spades on Middle",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"Place in Middle (5 max)\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "settle after Q of spades",
+      "do": {
+        "action": "wait",
+        "ms": 350
+      },
+      "expect": []
+    },
+    {
+      "label": "pick up T of diamonds",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"T of diamonds\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "place T of diamonds in Middle",
+      "do": {
+        "action": "wait",
+        "ms": 250
+      },
+      "expect": []
+    },
+    {
+      "label": "drop T of diamonds on Middle",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"Place in Middle (5 max)\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "settle after T of diamonds",
+      "do": {
+        "action": "wait",
+        "ms": 350
+      },
+      "expect": []
+    },
+    {
+      "label": "Next 3",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:has-text(\"Next 3\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "the next three arrive",
+      "do": {
+        "action": "wait",
+        "ms": 1500
+      },
+      "expect": [
+        {
+          "assert": "attr",
+          "selector": "flt-semantics[aria-label^=\"Tray\"]",
+          "name": "aria-label",
+          "equals": "Tray (3)"
+        },
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "Status: Drew 3"
+        }
+      ]
+    },
+    {
+      "label": "pick up 8 of diamonds",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"8 of diamonds\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "place 8 of diamonds in Middle",
+      "do": {
+        "action": "wait",
+        "ms": 250
+      },
+      "expect": []
+    },
+    {
+      "label": "drop 8 of diamonds on Middle",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"Place in Middle (5 max)\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "settle after 8 of diamonds",
+      "do": {
+        "action": "wait",
+        "ms": 350
+      },
+      "expect": []
+    },
+    {
+      "label": "pick up Q of diamonds",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"Q of diamonds\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "place Q of diamonds in Top",
+      "do": {
+        "action": "wait",
+        "ms": 250
+      },
+      "expect": []
+    },
+    {
+      "label": "drop Q of diamonds on Top",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"Place in Top (3 max)\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "settle after Q of diamonds",
+      "do": {
+        "action": "wait",
+        "ms": 350
+      },
+      "expect": []
+    },
+    {
+      "label": "Next 3",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:has-text(\"Next 3\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "the last three arrive",
+      "do": {
+        "action": "wait",
+        "ms": 1500
+      },
+      "expect": [
+        {
+          "assert": "attr",
+          "selector": "flt-semantics[aria-label^=\"Tray\"]",
+          "name": "aria-label",
+          "equals": "Tray (3)"
+        },
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "Status: Drew 3"
+        }
+      ]
+    },
+    {
+      "label": "pick up 6 of hearts",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"6 of hearts\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "place 6 of hearts in Top",
+      "do": {
+        "action": "wait",
+        "ms": 250
+      },
+      "expect": []
+    },
+    {
+      "label": "drop 6 of hearts on Top",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"Place in Top (3 max)\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "settle after 6 of hearts",
+      "do": {
+        "action": "wait",
+        "ms": 350
+      },
+      "expect": []
+    },
+    {
+      "label": "pick up 8 of hearts",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"8 of hearts\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "place 8 of hearts in Top",
+      "do": {
+        "action": "wait",
+        "ms": 250
+      },
+      "expect": []
+    },
+    {
+      "label": "drop 8 of hearts on Top",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:text-is(\"Place in Top (3 max)\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "settle after 8 of hearts",
+      "do": {
+        "action": "wait",
+        "ms": 350
+      },
+      "expect": []
+    },
+    {
+      "label": "the board is complete, so the button commits",
+      "do": {
+        "action": "wait",
+        "ms": 400
+      },
+      "expect": [
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "Commit"
+        }
+      ]
+    },
+    {
+      "label": "Commit",
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:has-text(\"Commit\")"
+      },
+      "expect": []
+    },
+    {
+      "label": "the result screen",
+      "do": {
+        "action": "wait",
+        "ms": 2500
+      },
+      "expect": [
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "Result"
+        },
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "FOUL"
+        },
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "Action Log (This hand)"
+        },
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "Seed: 7"
+        }
+      ]
+    }
+  ]
+}
