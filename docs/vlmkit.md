@@ -220,3 +220,31 @@ do not file these:
 Both come from the same blind spot: a single screenshot cannot distinguish "painted this way" from
 "painted this way *because* the control is disabled". Any reply that is about state rather than
 appearance has to be re-checked against the accessibility tree before it becomes a finding.
+
+## The fixes, and what they unlocked
+
+The gates and the vision pass together produced seven defects. Fixing two of them changed what this
+layer is able to do, which is why they are worth calling out here rather than only in the PR:
+
+- **The cards and the rows take a tap as well as a drag.** A card could previously only be moved by
+  dragging it, so the deterministic layer could never leave the tray: the flow vocabulary has no
+  drag step. Each card is now a named, tappable element (`Q of hearts`), and each row carries an
+  explicit place action (`Place in Middle (5 max)`) whose target sits in the label, away from the
+  cards. `play-hand.flow.json` plays a whole hand with clicks and reaches the result screen.
+- **A refused drop says why.** Both drop targets ignored Flutter's `rejected` list, so a card
+  dropped on a full row, a third card in a draw, or a full tray did nothing at all, silently. The
+  row now prints the reason while the drag is held over it, and a refused tap prints the same
+  reason under the status line.
+
+The rest: the result screen scrolls (the action log was unreachable at 375x568), `Seed: …` is a
+plain `Text` instead of a `SelectableText` that the web build turns into an empty unlabelled
+textarea, `Game Mode` and the seed line were darkened to clear 4.5:1, and the missing
+`cupertino_icons` dependency was added.
+
+Two consequences for writing flows here:
+
+- A row is `role=button` while it is empty and `role=group` with an `aria-label` once it holds a
+  card, so address rows through the place action, which is a button in both states.
+- `count`, `attr`, `text` and `focused` assertions run through `document.querySelectorAll`, which
+  understands plain CSS only — Playwright's `:has-text()` and `:text-is()` work in `click`
+  selectors, which Playwright resolves, but not in assertions.

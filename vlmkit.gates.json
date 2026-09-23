@@ -13,7 +13,8 @@
       "check integrity --wait-until load --timeout 30000",
       "check a11y touch --wait-until load --timeout 30000",
       "scan handlers --wait-until load --timeout 30000",
-      "verify flow --flow tools/vlmkit/flows/smoke.flow.json --wait-until load --timeout 30000"
+      "verify flow --flow tools/vlmkit/flows/smoke.flow.json --wait-until load --timeout 30000",
+      "verify flow --flow tools/vlmkit/flows/play-hand.flow.json --wait-until load --timeout 60000"
     ],
 
     "rules": {

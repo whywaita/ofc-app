@@ -1,69 +1,161 @@
 {
   "//": "Reaches the screens a URL gate cannot: vlmkit gates navigate and measure one URL, so the seed dialog and the game screen only exist for a scripted flow. Selectors address the Flutter accessibility DOM that tools/vlmkit/serve-web.mjs switches on; without it every one of these elements is absent and the flow fails at step 1, which is the intended failure mode.",
   "//timing": "Each `wait` step is a route transition, not padding. Flutter animates between screens and an assertion runs as soon as the previous action returns, so asserting immediately after a click reads the outgoing screen. The empty `expect` arrays are deliberate: what the click steps assert is the following step's post-condition.",
-  "viewport": { "width": 375, "height": 812 },
+  "viewport": {
+    "width": 375,
+    "height": 812
+  },
   "steps": [
     {
       "label": "home: three game modes and both entry points are exposed",
-      "do": { "action": "wait", "ms": 4000 },
+      "do": {
+        "action": "wait",
+        "ms": 4000
+      },
       "expect": [
-        { "assert": "text", "selector": "flutter-view", "contains": "Open Face Chinese Poker" },
-        { "assert": "text", "selector": "flutter-view", "contains": "Game Mode" },
-        { "assert": "count", "selector": "flt-semantics[role=\"button\"]", "equals": 5 }
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "Open Face Chinese Poker"
+        },
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "Game Mode"
+        },
+        {
+          "assert": "count",
+          "selector": "flt-semantics[role=\"button\"]",
+          "equals": 5
+        }
       ]
     },
     {
       "label": "Practice",
-      "do": { "action": "click", "selector": "flt-semantics[role=\"button\"]:has-text(\"Practice\")" },
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:has-text(\"Practice\")"
+      },
       "expect": []
     },
     {
       "label": "the seed dialog offers both modes",
-      "do": { "action": "wait", "ms": 1500 },
+      "do": {
+        "action": "wait",
+        "ms": 1500
+      },
       "expect": [
-        { "assert": "count", "selector": "flt-semantics[role=\"alertdialog\"]", "equals": 1 },
-        { "assert": "text", "selector": "flt-semantics[role=\"alertdialog\"]", "contains": "Choose Practice Seed" },
-        { "assert": "text", "selector": "flt-semantics[role=\"alertdialog\"]", "contains": "Random" },
-        { "assert": "text", "selector": "flt-semantics[role=\"alertdialog\"]", "contains": "Specify" }
+        {
+          "assert": "count",
+          "selector": "flt-semantics[role=\"alertdialog\"]",
+          "equals": 1
+        },
+        {
+          "assert": "text",
+          "selector": "flt-semantics[role=\"alertdialog\"]",
+          "contains": "Choose Practice Seed"
+        },
+        {
+          "assert": "text",
+          "selector": "flt-semantics[role=\"alertdialog\"]",
+          "contains": "Random"
+        },
+        {
+          "assert": "text",
+          "selector": "flt-semantics[role=\"alertdialog\"]",
+          "contains": "Specify"
+        }
       ]
     },
     {
       "label": "Start",
-      "do": { "action": "click", "selector": "flt-semantics[role=\"button\"]:has-text(\"Start\")" },
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:has-text(\"Start\")"
+      },
       "expect": []
     },
     {
       "label": "Start deals the initial five cards into the tray",
-      "do": { "action": "wait", "ms": 2500 },
+      "do": {
+        "action": "wait",
+        "ms": 2500
+      },
       "expect": [
-        { "assert": "text", "selector": "flutter-view", "contains": "Status: Dealt 5" },
-        { "assert": "text", "selector": "flutter-view", "contains": "Tray (5)" },
-        { "assert": "count", "selector": "flt-semantics[role=\"button\"]", "equals": 2 }
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "Status: Dealt 5"
+        },
+        {
+          "assert": "attr",
+          "selector": "flt-semantics[aria-label^=\"Tray\"]",
+          "name": "aria-label",
+          "equals": "Tray (5)"
+        },
+        {
+          "assert": "count",
+          "selector": "flt-semantics[role=\"group\"][aria-label^=\"Tray\"] flt-semantics[role=\"button\"]",
+          "equals": 5
+        }
       ]
     },
     {
       "label": "the commit button is disabled until the initial five are placed",
-      "do": { "action": "wait", "ms": 300 },
+      "do": {
+        "action": "wait",
+        "ms": 300
+      },
       "expect": [
-        { "assert": "text", "selector": "flutter-view", "contains": "Next 3" },
-        { "assert": "count", "selector": "flt-semantics[role=\"button\"][aria-disabled=\"true\"]", "equals": 1 },
-        { "assert": "count", "selector": "flt-semantics[role=\"button\"]", "equals": 2 }
+        {
+          "assert": "text",
+          "selector": "flutter-view",
+          "contains": "Next 3"
+        },
+        {
+          "assert": "count",
+          "selector": "flt-semantics[role=\"button\"][aria-disabled=\"true\"]",
+          "equals": 1
+        }
       ]
     },
     {
       "label": "Back",
-      "do": { "action": "click", "selector": "flt-semantics[role=\"button\"]:has-text(\"Back\")" },
+      "do": {
+        "action": "click",
+        "selector": "flt-semantics[role=\"button\"]:has-text(\"Back\")"
+      },
       "expect": []
     },
     {
       "label": "leaving mid-hand asks before discarding the hand",
-      "do": { "action": "wait", "ms": 1500 },
+      "do": {
+        "action": "wait",
+        "ms": 1500
+      },
       "expect": [
-        { "assert": "count", "selector": "flt-semantics[role=\"alertdialog\"]", "equals": 1 },
-        { "assert": "text", "selector": "flt-semantics[role=\"alertdialog\"]", "contains": "Discard game?" },
-        { "assert": "text", "selector": "flt-semantics[role=\"alertdialog\"]", "contains": "Cancel" },
-        { "assert": "text", "selector": "flt-semantics[role=\"alertdialog\"]", "contains": "Discard" }
+        {
+          "assert": "count",
+          "selector": "flt-semantics[role=\"alertdialog\"]",
+          "equals": 1
+        },
+        {
+          "assert": "text",
+          "selector": "flt-semantics[role=\"alertdialog\"]",
+          "contains": "Discard game?"
+        },
+        {
+          "assert": "text",
+          "selector": "flt-semantics[role=\"alertdialog\"]",
+          "contains": "Cancel"
+        },
+        {
+          "assert": "text",
+          "selector": "flt-semantics[role=\"alertdialog\"]",
+          "contains": "Discard"
+        }
       ]
     }
-  ]
+  ],
+  "//counts": "Count assertions run through document.querySelectorAll, which understands plain CSS only: Playwright's :has-text()/:text-is() are not available to them, and a Flutter label is element text rather than an attribute. The row place actions are therefore exercised by play-hand.flow.json, which clicks them."
 }
