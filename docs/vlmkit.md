@@ -101,19 +101,23 @@ that cannot see a defect reads as a guarantee:
 ## Known flake
 
 `check a11y focus` was measured over ten consecutive standalone runs and is **not** in the gate
-list. It failed 3 of 10, and neither outcome means what it says:
+list. It failed 3 of 10, and the outcomes split by whether Flutter had finished building the
+accessibility tree when the gate started tabbing:
 
-- Failing runs report `captured 5 focus step(s)` and one finding, `[trap] Focus stayed on the
-  same element … across two Tab presses` (on the Practice button).
-- Passing runs report `captured 1 focus step(s)` — the accessibility tree was not built yet, so
-  the gate tabbed through a page with one focusable element and proved nothing.
+- 4 runs captured `1 focus step` — the tree was not up yet, so the page had a single focusable
+  element and the gate passed having proved nothing.
+- 6 runs captured 5-6 steps and split 3-3: three passed, three reported one finding,
+  `[trap] Focus stayed on the same element … across two Tab presses` (on the Practice button).
+
+So a pass means either "measured nothing" or "won the race", and a failure means "lost it" —
+the same page state gives both verdicts about half the time.
 
 Driving the same page with real `Tab` key events by hand gives a clean order — `OFCP` →
 Standard → Deuces → Joker → Practice → Pass & Play → body — so the trap is the gate's tab
 timing against Flutter's asynchronous semantics focus, not a defect in the app. The gate is
 worth revisiting (a real focus trap is exactly the kind of bug this app should not ship), but a
-gate whose pass means "measured nothing" and whose fail means "raced" belongs out of CI until
-someone makes it deterministic:
+gate whose pass can mean "measured nothing" belongs out of CI until someone makes it
+deterministic:
 
 ```bash
 npx vlmkit check a11y focus --wait-until load --timeout 30000 http://127.0.0.1:4173/
