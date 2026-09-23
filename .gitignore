@@ -184,3 +184,13 @@ Temporary Items
 *.icloud
 
 # End of https://www.toptal.com/developers/gitignore/api/flutter,macos,dart,android
+
+# vlmkit run artifacts
+.vlmkit/
+test-results/
+
+# vlmkit verification tooling (node)
+node_modules/
+
+# scratch output from manual verification runs
+.probe/

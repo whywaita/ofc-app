@@ -1,0 +1,48 @@
+{
+  "//": "Web verification gates for the Flutter web build. Run with `make verify-web` (build + `npx vlmkit gates run`). See docs/vlmkit.md for why the server is not a plain static file server and why three integrity rules are switched off.",
+
+  "webServer": {
+    "//": "tools/vlmkit/serve-web.mjs serves app/build/web and injects the four lines that enable Flutter's accessibility DOM. A plain static server would serve the same files and every DOM gate would measure an empty page.",
+    "command": "node tools/vlmkit/serve-web.mjs",
+    "url": "http://127.0.0.1:4173/",
+    "timeout": 60000
+  },
+
+  "defaults": {
+    "gates": [
+      "check integrity --wait-until load --timeout 30000",
+      "check a11y touch --wait-until load --timeout 30000",
+      "scan handlers --wait-until load --timeout 30000",
+      "verify flow --flow tools/vlmkit/flows/smoke.flow.json --wait-until load --timeout 30000"
+    ],
+
+    "rules": {
+      "//": "The accessibility DOM is a description of the canvas, not a rendering of it: Flutter marks it `filter: opacity(0%)` and paints the real pixels into the canvas. Every rule that reads computed paint therefore reports the app as invisible text at 1.00:1. The rules that read geometry, roles, names and state stay on.",
+      "check.integrity/invisible-text": {
+        "setting": "off",
+        "reason": "Flutter web paints the app into a canvas and renders the accessibility DOM transparent by construction; this rule reports all 8 text blocks on the home screen as invisible at 1.00:1. Use check a11y touch / focus / scan handlers / verify flow, which read roles, names, rects and state.",
+        "owner": "app/web",
+        "expires": "2027-06-30"
+      },
+      "check.integrity/low-contrast-text": {
+        "setting": "off",
+        "reason": "Same cause as invisible-text: the computed fill of every text node is rgba(0,0,0,0) over the page background. Real contrast lives in the Flutter theme and cannot be measured from this DOM.",
+        "owner": "app/web",
+        "expires": "2027-06-30"
+      },
+      "check.integrity/occluded-text": {
+        "setting": "off",
+        "reason": "Same cause: paint order is the canvas's, and hit testing against the transparent accessibility layer says nothing about what a user sees.",
+        "owner": "app/web",
+        "expires": "2027-06-30"
+      }
+    }
+  },
+
+  "pages": [
+    {
+      "id": "home",
+      "source": "http://127.0.0.1:4173/"
+    }
+  ]
+}

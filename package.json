@@ -1,0 +1,25 @@
+{
+  "name": "ofc-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Web verification tooling for ofc-app (vlmkit). Not a JS application.",
+  "type": "module",
+  "scripts": {
+    "serve:web": "node tools/vlmkit/serve-web.mjs",
+    "verify:web": "vlmkit gates run",
+    "verify:web:list": "vlmkit gates list",
+    "verify:web:suppressions": "vlmkit gates suppressions"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/whywaita/ofc-app.git"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@mizchi/vlmkit": "0.22.0",
+    "playwright": "^1.63.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

@@ -1,4 +1,4 @@
-.PHONY: help analyze test build ci format app-run app-analyze app-test app-build app-build-web app-build-web-pages core-analyze core-test app-ios-open
+.PHONY: help analyze test build ci format app-run app-analyze app-test app-build app-build-web app-build-web-pages core-analyze core-test app-ios-open verify-web verify-web-list verify-web-setup verify-web-suppressions serve-web-verify
 
 DART ?= dart
 FLUTTER ?= flutter
@@ -17,6 +17,10 @@ help:
 	@echo "  make app-build-web # flutter build web (static files -> app/build/web)"
 	@echo "  make app-build-web-pages BASE_HREF=/repo/ # flutter build web with base-href for GitHub Pages"
 	@echo "  make app-ios-open  # Xcode workspace を開く (app/ios/Runner.xcworkspace)"
+	@echo "  make verify-web-setup # npm ci + playwright chromium (初回のみ)"
+	@echo "  make verify-web    # flutter build web + vlmkit gates (docs/vlmkit.md)"
+	@echo "  make verify-web-list # 実行される gate 一覧 (サーバは起動しない)"
+	@echo "  make serve-web-verify # 検証用サーバだけ起動 (手動で触る用)"
 
 analyze: core-analyze app-analyze
 
@@ -56,3 +60,26 @@ app-run:
 
 app-ios-open:
 	cd $(APP_DIR) && open ios/Runner.xcworkspace
+
+# --- Web verification (vlmkit) ---
+# vlmkit measures the DOM; a Flutter web build renders into a canvas, so the DOM is empty
+# until the accessibility tree is switched on. tools/vlmkit/serve-web.mjs does that when it
+# serves the bundle, which is why these targets do not use a plain static server.
+# See docs/vlmkit.md for what each gate can and cannot see.
+NODE ?= node
+
+verify-web-setup:
+	npm ci
+	npx playwright install chromium
+
+verify-web-list:
+	npx vlmkit gates list
+
+verify-web-suppressions:
+	npx vlmkit gates suppressions
+
+serve-web-verify: app-build-web
+	$(NODE) tools/vlmkit/serve-web.mjs
+
+verify-web: app-build-web
+	npx vlmkit gates run
