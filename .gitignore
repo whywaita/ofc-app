@@ -194,3 +194,7 @@ node_modules/
 
 # scratch output from manual verification runs
 .probe/
+
+# Flutter tool state, written into the project because `make app-build-web` runs flutter with
+# HOME=$(pwd) (keeps the SDK's analytics out of the real home directory)
+app/.config/

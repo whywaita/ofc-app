@@ -129,3 +129,94 @@ npx vlmkit check a11y focus --wait-until load --timeout 30000 http://127.0.0.1:4
 `defaults.gates` is the list that runs for every page, and `defaults.rules` records every rule
 that is switched off together with the reason and an expiry date. An expired suppression stops
 being applied, so a stale entry fails the run rather than hiding quietly.
+
+## Contrast: what the gates cannot see
+
+`check integrity --rule check.integrity/low-contrast-text` is off for this app, and not because
+the contrast is fine. It reads text colours from the DOM, and Flutter's accessibility DOM paints
+nothing — every `<flt-semantics>` node is transparent, so the rule reports every label as 1.00:1.
+Eight such findings appeared on the home screen, all false positives, and switching the rule off
+left the app with no contrast coverage at all.
+
+`tools/vlmkit/contrast-audit.mjs` measures the pixels instead: it screenshots the page, takes the
+rect of every labelled node from the accessibility tree, then treats the most common colour inside
+a rect as the background and the colour farthest from it as the text. Thresholds follow WCAG 2.1 —
+4.5:1 for normal text, 3.0:1 for text at least 24px tall — and a disabled control is skipped
+because 1.4.3 exempts inactive components.
+
+```bash
+make contrast-audit                        # home screen, 375x812
+make contrast-audit CONTRAST_ARGS="--click Practice --click Start"   # then the dealt game screen
+node tools/vlmkit/contrast-audit.mjs --json            # machine-readable
+```
+
+It fails the run on any label below its threshold, and `--allow "<label>;<reason>"` accepts one
+explicitly, the same shape the vlmkit gates use. Two labels fail on the current build:
+`Game Mode` (4.39:1) and the seed line (2.55:1, and it is also unlabelled in the accessibility
+tree — see the seed finding in the PR). Both are invisible to every vlmkit gate.
+
+Note the floor `check a11y touch` applies: WCAG AA 2.5.8 wants a 24px shorter side, so the three
+32px mode buttons pass it. The 44px figure people quote is the iOS guideline, which this gate does
+not enforce.
+
+## A vision model on the same screens
+
+The gates above are geometry and pixels; a vision model answers the questions geometry cannot —
+"is anything cut off", "is there any hint how to drag a card". Any image-capable model works.
+On OpenCode Go, 14 of the 33 served models were verified to accept image input — the probe sends
+a real screenshot and asks for text that exists only in the image, so a wrong answer is visible:
+`mimo-v2.6-pro`, `mimo-v2.6-flash`, `mimo-v2.5`, `qwen3.8-max`, `qwen3.8-flash`, `qwen3.7-plus`,
+`qwen3.6-plus`, `minimax-m3`, `kimi-k2.7-code`, `glm-5.3-flash`, `omen-alpha`,
+`deepseek-v4-flash-vision-exp`, `deepseek-flash`, `deepseek-v4.1-flash`. Four more returned
+nothing or denied seeing an image at all (`deepseek-v4-pro`, `kimi-k2.6`, `kimi-k3`, `longcat-2.0`),
+the `glm-5.1/5.2/5.3` chat models reject images outright ("This model does not support image
+inputs"), and `grok-4.6/4.7`, `gpt-5.6-luna`, `minimax-m2.7` were answering 503 from upstream
+when this was written.
+
+A first attempt at this probe is worth recording as a mistake: the test image was a blank white
+page (the data: URL had not painted before the screenshot), so every "I see no text" reply looked
+like a model that could not see — while in fact it was a correct reading of a white image. Check
+that the test image has content before trusting a negative result.
+
+Feed the model a screenshot and a question with a verifiable answer — that is what makes the reply
+trustworthy: asked for the cards in each row, three models returned the same three rows the
+accessibility tree reported, and asked about a 568px-tall capture all of them reported the
+Action Log cut off after `draw: 5`.
+
+`tools/vlmkit/vision-review.mjs` runs that loop: it drives the page with Playwright, screenshots
+a screen, sends it to a vision model and prints the reply (optionally to `--out <dir>` as a
+screenshot plus a markdown report). It needs `OPENCODE_GO_API_KEY` in the environment and exits 2
+without it, so it never runs in CI — the key is never read from or written to a file.
+
+```bash
+make vision-review                                          # home screen
+make vision-review VISION_ARGS="--click Practice --click Start"   # the dealt game screen
+```
+
+## How the two layers combine
+
+Neither layer is the answer on its own. The deterministic side — the vlmkit gates plus
+`contrast-audit.mjs` — proves things about geometry, colour and state, but it only looks where it
+is pointed and it cannot describe what a screen means. The vision model reads meaning off the
+pixels but will confidently describe a rendering it has misread. Used as hypothesis and proof,
+in that order, they cover each other:
+
+| Defect | Found by the vision model | Confirmed by the deterministic side |
+| --- | --- | --- |
+| Action Log unreachable at 375x568 | "content appears to continue past the bottom edge" | 35 of 52 labelled rects fall outside the viewport; `docScrollHeight == innerHeight` |
+| Seed line unreadable | "light gray text, lower contrast than adjacent text" | measured 2.55:1 against a 4.5:1 floor |
+| No way to know a card must be dragged | "no visible hint how to use the row controls" | the cards are `Draggable` with no `flt-tappable` node and no keyboard path |
+
+And in the other direction, two replies from the same run that the deterministic side disproves —
+do not file these:
+
+- **"Next 3 is gray on gray, low contrast."** It is a *disabled* control (the tray still holds a
+  card), and WCAG 1.4.3 exempts inactive components; `contrast-audit.mjs` reports it as skipped
+  rather than failing.
+- **"The seed input looks active while Random is selected."** In Random mode the input carries
+  `disabled` — the field is inert, and typing into it does nothing. The vision model read a
+  disabled field as an active one.
+
+Both come from the same blind spot: a single screenshot cannot distinguish "painted this way" from
+"painted this way *because* the control is disabled". Any reply that is about state rather than
+appearance has to be re-checked against the accessibility tree before it becomes a finding.

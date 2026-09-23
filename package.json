@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "serve:web": "node tools/vlmkit/serve-web.mjs",
+    "contrast:audit": "node tools/vlmkit/contrast-audit.mjs",
     "verify:web": "vlmkit gates run",
     "verify:web:list": "vlmkit gates list",
     "verify:web:suppressions": "vlmkit gates suppressions"

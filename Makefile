@@ -21,6 +21,8 @@ help:
 	@echo "  make verify-web    # flutter build web + vlmkit gates (docs/vlmkit.md)"
 	@echo "  make verify-web-list # 実行される gate 一覧 (サーバは起動しない)"
 	@echo "  make serve-web-verify # 検証用サーバだけ起動 (手動で触る用)"
+	@echo "  make contrast-audit # ピクセル実測の WCAG コントラスト検査 (docs/vlmkit.md)"
+	@echo "  make vision-review  # 画面を VLM に講評させる (OPENCODE_GO_API_KEY 必須、CI 外)"
 
 analyze: core-analyze app-analyze
 
@@ -80,6 +82,24 @@ verify-web-suppressions:
 
 serve-web-verify: app-build-web
 	$(NODE) tools/vlmkit/serve-web.mjs
+
+# Pixel-measured WCAG contrast. Starts its own server and kills it afterwards; pass
+# CONTRAST_ARGS="--click Practice --click Start" to audit a deeper screen (docs/vlmkit.md).
+contrast-audit: app-build-web
+	@node tools/vlmkit/serve-web.mjs & \
+	server=$$!; \
+	trap 'kill $$server 2>/dev/null' EXIT; \
+	sleep 2; \
+	node tools/vlmkit/contrast-audit.mjs $(CONTRAST_ARGS)
+
+# Vision review of a screen. Needs OPENCODE_GO_API_KEY in the environment; without it the script
+# exits 2 and prints why. Not part of `make verify-web` — CI stays key-free (docs/vlmkit.md).
+vision-review: app-build-web
+	@node tools/vlmkit/serve-web.mjs & \
+	server=$$!; \
+	trap 'kill $$server 2>/dev/null' EXIT; \
+	sleep 2; \
+	node tools/vlmkit/vision-review.mjs $(VISION_ARGS)
 
 verify-web: app-build-web
 	npx vlmkit gates run
