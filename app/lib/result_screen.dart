@@ -79,117 +79,123 @@ class ResultScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Result')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(foul ? 'FOUL' : 'OK',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: foul ? Colors.red : Colors.green,
-                    )),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: SelectableText(
-                    'Seed: $seed',
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(foul ? 'FOUL' : 'OK',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        color: foul ? Colors.red : Colors.green,
+                      )),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    // Plain Text, not SelectableText: on the web a SelectableText becomes a disabled
+                    // <textarea> whose value is empty and whose aria-label is null, so a screen
+                    // reader never sees the seed. The copy button next to it is the copying path.
+                    child: Text(
+                      'Seed: $seed',
+                      textAlign: TextAlign.center,
+                      // grey measured 2.55:1 on this background; shade700 clears 4.5:1.
+                      style: TextStyle(color: Colors.grey.shade700),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Copy seed',
+                    icon: const Icon(Icons.copy_outlined, size: 18),
+                    onPressed: () async {
+                      await Clipboard.setData(
+                          ClipboardData(text: seed.toString()));
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              row('Top', _cat3Name(eval.top), rTop),
+              const SizedBox(height: 6),
+              Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  alignment: WrapAlignment.center,
+                  children: [for (final c in board.top) _card(c)]),
+              const SizedBox(height: 12),
+              row('Middle', _cat5Name(eval.middle), rMid),
+              const SizedBox(height: 6),
+              Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  alignment: WrapAlignment.center,
+                  children: [for (final c in board.middle) _card(c)]),
+              const SizedBox(height: 12),
+              row('Bottom', _cat5Name(eval.bottom), rBot),
+              const SizedBox(height: 6),
+              Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  alignment: WrapAlignment.center,
+                  children: [for (final c in board.bottom) _card(c)]),
+              const Divider(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Royalties Total'),
+                  Text(foul ? '0' : '+$rSum'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (nextFantasy.active) ...[
+                Text('Next Hand: Fantasy ${nextFantasy.initialCount} cards',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.grey),
+                    style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                ElevatedButton(
+                  onPressed: () =>
+                      Navigator.of(context).pop(nextFantasy.initialCount),
+                  child: const Text('Start Next Hand'),
+                ),
+              ] else ...[
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(0),
+                  child: const Text('Back'),
+                ),
+              ],
+              const SizedBox(height: 16),
+              if (history != null) ...[
+                const Divider(),
+                Text('Action Log (This hand)',
+                    style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 160,
+                  child: ListView.builder(
+                    itemCount: history!.length,
+                    itemBuilder: (context, i) {
+                      final e = history![i];
+                      switch (e.type) {
+                        case 'draw':
+                          final n = e.data['count'];
+                          return Text('draw: $n');
+                        case 'place':
+                          return Text(
+                              'place: ${e.data['slot']} ${e.data['card']}');
+                        case 'discard':
+                          return Text('discard: ${e.data['card']}');
+                        case 'commit':
+                          return const Text('commit');
+                        default:
+                          return Text(e.type);
+                      }
+                    },
                   ),
                 ),
-                IconButton(
-                  tooltip: 'Copy seed',
-                  icon: const Icon(Icons.copy_outlined, size: 18),
-                  onPressed: () async {
-                    await Clipboard.setData(
-                        ClipboardData(text: seed.toString()));
-                  },
-                ),
               ],
-            ),
-            const SizedBox(height: 12),
-            row('Top', _cat3Name(eval.top), rTop),
-            const SizedBox(height: 6),
-            Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                alignment: WrapAlignment.center,
-                children: [for (final c in board.top) _card(c)]),
-            const SizedBox(height: 12),
-            row('Middle', _cat5Name(eval.middle), rMid),
-            const SizedBox(height: 6),
-            Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                alignment: WrapAlignment.center,
-                children: [for (final c in board.middle) _card(c)]),
-            const SizedBox(height: 12),
-            row('Bottom', _cat5Name(eval.bottom), rBot),
-            const SizedBox(height: 6),
-            Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                alignment: WrapAlignment.center,
-                children: [for (final c in board.bottom) _card(c)]),
-            const Divider(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Royalties Total'),
-                Text(foul ? '0' : '+$rSum'),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (nextFantasy.active) ...[
-              Text('Next Hand: Fantasy ${nextFantasy.initialCount} cards',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              ElevatedButton(
-                onPressed: () =>
-                    Navigator.of(context).pop(nextFantasy.initialCount),
-                child: const Text('Start Next Hand'),
-              ),
-            ] else ...[
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(0),
-                child: const Text('Back'),
-              ),
             ],
-            const SizedBox(height: 16),
-            if (history != null) ...[
-              const Divider(),
-              Text('Action Log (This hand)',
-                  style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 160,
-                child: ListView.builder(
-                  itemCount: history!.length,
-                  itemBuilder: (context, i) {
-                    final e = history![i];
-                    switch (e.type) {
-                      case 'draw':
-                        final n = e.data['count'];
-                        return Text('draw: $n');
-                      case 'place':
-                        return Text(
-                            'place: ${e.data['slot']} ${e.data['card']}');
-                      case 'discard':
-                        return Text('discard: ${e.data['card']}');
-                      case 'commit':
-                        return const Text('commit');
-                      default:
-                        return Text(e.type);
-                    }
-                  },
-                ),
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );
