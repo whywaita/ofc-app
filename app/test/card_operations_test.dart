@@ -171,6 +171,120 @@ void main() {
     expect(trayCards(tester).length, 4, reason: 'the card stays in the tray');
     expectConsistent(tester, cards: 5);
   });
+  testWidgets('a card can be picked up and placed by tapping', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await startHand(tester);
+    final card = trayCards(tester).first;
+
+    // The card is named for assistive technology, which also gives a click-only driver a handle.
+    expect(find.bySemanticsLabel(cardLabel(card)), findsOneWidget,
+        reason: 'tray cards must be reachable without dragging');
+
+    await tapCard(tester, trayTarget(), card);
+    await tapRowLabel(tester, 'Top');
+    expect(rowCards(tester, 'Top'), [card], reason: 'tapping a row places the picked-up card');
+    expect(trayCards(tester).length, 4);
+    expectConsistent(tester, cards: 5);
+    semantics.dispose();
+  });
+
+  testWidgets('a tapped card moves to another row and back to the tray', (tester) async {
+    await startHand(tester);
+    final card = trayCards(tester).first;
+    await dragTrayCardToRow(tester, card, 'Top');
+
+    await tapCard(tester, rowTarget('Top'), card);
+    await tapRowLabel(tester, 'Middle');
+    expect(rowCards(tester, 'Top'), isEmpty);
+    expect(rowCards(tester, 'Middle'), [card]);
+    expectConsistent(tester, cards: 5);
+
+    await tapCard(tester, rowTarget('Middle'), card);
+    await tapTrayLabel(tester);
+    expect(rowCards(tester, 'Middle'), isEmpty);
+    expect(trayCards(tester), contains(card));
+    expectConsistent(tester, cards: 5);
+  });
+
+  testWidgets('a refused drag says why', (tester) async {
+    await startHand(tester);
+    for (final card in trayCards(tester).take(3).toList()) {
+      await dragTrayCardToRow(tester, card, 'Top');
+    }
+    expect(rowCards(tester, 'Top').length, 3);
+
+    // Hold the fourth card over the full row: the reason is shown while dragging.
+    final gesture = await tester.startGesture(tester.getCenter(_cardIn(trayTarget(), trayCards(tester).first)));
+    await tester.pump(const Duration(milliseconds: 50));
+    await gesture.moveTo(tester.getCenter(rowTarget('Top')));
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.text('Row is full (3 max)'), findsOneWidget,
+        reason: 'a refused drop must say why');
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Row is full (3 max)'), findsNothing, reason: 'the reason is not sticky');
+    expect(rowCards(tester, 'Top').length, 3);
+    expectConsistent(tester, cards: 5);
+  });
+
+  testWidgets('a refused tap says why', (tester) async {
+    await startHand(tester);
+    for (final card in trayCards(tester).take(3).toList()) {
+      await dragTrayCardToRow(tester, card, 'Top');
+    }
+    final spare = trayCards(tester).first;
+
+    await tapCard(tester, trayTarget(), spare);
+    await tapRowLabel(tester, 'Top');
+    expect(find.text('Row is full (3 max)'), findsOneWidget,
+        reason: 'a refused tap must say why');
+    expect(rowCards(tester, 'Top').length, 3);
+    expect(trayCards(tester), contains(spare));
+    expectConsistent(tester, cards: 5);
+  });
+
+  testWidgets('a third card in one draw is refused with a reason', (tester) async {
+    await startHand(tester);
+    await placeWholeTray(tester, 'Bottom');
+    await tapAdvance(tester);
+
+    final draw = trayCards(tester).toList();
+    await dragTrayCardToRow(tester, draw[0], 'Middle');
+    await dragTrayCardToRow(tester, draw[1], 'Middle');
+    await tapCard(tester, trayTarget(), draw[2]);
+    await tapRowLabel(tester, 'Middle');
+    expect(find.text('Two cards per draw'), findsOneWidget);
+    expect(rowCards(tester, 'Middle').length, 2);
+    expectConsistent(tester, cards: 8);
+  });
+
+  testWidgets('each row offers a named place action that works on a row holding cards',
+      (tester) async {
+    final semantics = tester.ensureSemantics();
+    await startHand(tester);
+    for (final row in const [['Top', 3], ['Middle', 5], ['Bottom', 5]]) {
+      expect(find.bySemanticsLabel('Place in ${row[0]} (${row[1]} max)'), findsOneWidget,
+          reason: 'a place action must be reachable without aiming at the cards');
+    }
+
+    final card = trayCards(tester).first;
+    await tapCard(tester, trayTarget(), card);
+    await tester.tap(find.bySemanticsLabel('Place in Top (3 max)'));
+    await tester.pumpAndSettle();
+    expect(rowCards(tester, 'Top'), [card]);
+    expectConsistent(tester, cards: 5);
+
+    // and again once the row already holds a card, which is where a plain tap can miss
+    final second = trayCards(tester).first;
+    await tapCard(tester, trayTarget(), second);
+    await tester.tap(find.bySemanticsLabel('Place in Top (3 max)'));
+    await tester.pumpAndSettle();
+    expect(rowCards(tester, 'Top').length, 2);
+    expectConsistent(tester, cards: 5);
+    semantics.dispose();
+  });
+
 }
 
 // ---------------------------------------------------------------- harness
@@ -290,3 +404,21 @@ Future<void> dropOnEmptySpace(WidgetTester tester, Finder source) async {
   await gesture.up();
   await tester.pumpAndSettle();
 }
+
+Future<void> tapRowLabel(WidgetTester tester, String row) async {
+  await tester.tap(find.textContaining('$row ('));
+  await tester.pumpAndSettle();
+}
+
+Future<void> tapTrayLabel(WidgetTester tester) async {
+  await tester.tap(find.textContaining('Tray ('));
+  await tester.pumpAndSettle();
+}
+
+Future<void> tapCard(WidgetTester tester, Finder area, PlayingCard card) async {
+  await tester.tap(_cardIn(area, card));
+  await tester.pumpAndSettle();
+}
+
+String cardLabel(PlayingCard card) =>
+    card.isJoker ? 'Joker' : '${CardRenderer.rankSymbol(card)} of ${card.suit!.name}';
