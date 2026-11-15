@@ -4,6 +4,8 @@ publish_to: 'none'
 version: 0.0.1+1
 environment:
   sdk: '>=3.0.0 <4.0.0'
+  # material_ui / cupertino_ui replace the framework's deprecated material and cupertino libraries.
+  flutter: '>=3.47.0'
 
 dependencies:
   flutter:
@@ -13,6 +15,8 @@ dependencies:
   # CupertinoPageRoute is used by adaptiveRoute (lib/utils/navigation_utils.dart); without this
   # package its font is missing from the build.
   cupertino_icons: ^1.0.8
+  material_ui: ^1.11.0
+  cupertino_ui: ^1.1.6
 
 dev_dependencies:
   flutter_test:
