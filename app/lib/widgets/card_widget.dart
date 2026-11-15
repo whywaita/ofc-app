@@ -1,84 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:ofc_app_core/core/models/playing_card.dart';
+import 'package:ofc_app_core/ofc_core.dart';
 
-/// Utility class for card rendering operations
-class CardRenderer {
-  /// Converts a card's rank to its symbol representation
-  /// (A, K, Q, J, T for face cards, number for others)
-  static String rankSymbol(PlayingCard card) {
-    if (card.isJoker) return '🃏';
+import '../presentation/labels.dart';
 
-    switch (card.rank!.name) {
-      case 'ace':
-        return 'A';
-      case 'king':
-        return 'K';
-      case 'queen':
-        return 'Q';
-      case 'jack':
-        return 'J';
-      case 'ten':
-        return 'T';
-      default:
-        return card.rank!.value.toString();
-    }
-  }
-
-  /// Converts a card's suit to its emoji representation
-  static String suitEmoji(PlayingCard card) {
-    if (card.isJoker) return '';
-
-    switch (card.suit!.name) {
-      case 'hearts':
-        return '♥️';
-      case 'diamonds':
-        return '♦️';
-      case 'spades':
-        return '♠️';
-      default:
-        return '♣️';
-    }
-  }
-
-  /// Returns true if the card is red (hearts or diamonds)
-  static bool isRed(PlayingCard card) =>
-      !card.isJoker &&
-      (card.suit!.name == 'hearts' || card.suit!.name == 'diamonds');
-
-  /// Returns the color for the card text (red or black)
-  static Color textColor(PlayingCard card) =>
-      isRed(card) ? Colors.red : Colors.black87;
-}
-
-/// A widget that displays a playing card
+/// The face of one card.
 class CardWidget extends StatelessWidget {
-  final PlayingCard card;
-  final bool large;
-  final Color? borderColor;
-  final bool isSmallScreen;
-
   const CardWidget({
     super.key,
     required this.card,
     this.large = false,
     this.borderColor,
-    this.isSmallScreen = false,
+    this.compact = false,
   });
+
+  final PlayingCard card;
+
+  /// Drawn bigger, for the drag feedback.
+  final bool large;
+  final Color? borderColor;
+
+  /// Tighter padding and smaller type for phone-width layouts.
+  final bool compact;
+
+  static Color textColor(PlayingCard card) =>
+      card is StandardCard && card.suit.isRed ? Colors.red : Colors.black87;
 
   @override
   Widget build(BuildContext context) {
-    final text =
-        '${CardRenderer.rankSymbol(card)}${CardRenderer.suitEmoji(card)}';
-    final color = CardRenderer.textColor(card);
-
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isSmallScreen ? 6 : 10,
-        vertical: isSmallScreen ? 4 : 8,
+        horizontal: compact ? 6 : 10,
+        vertical: compact ? 4 : 8,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(isSmallScreen ? 6 : 8),
+        borderRadius: BorderRadius.circular(compact ? 6 : 8),
         border: Border.all(color: borderColor ?? Colors.grey.shade400),
         boxShadow: [
           BoxShadow(
@@ -89,14 +45,31 @@ class CardWidget extends StatelessWidget {
         ],
       ),
       child: Text(
-        text,
+        Labels.cardFace(card),
         style: TextStyle(
-          fontSize:
-              large ? (isSmallScreen ? 18 : 22) : (isSmallScreen ? 14 : 18),
-          color: color,
+          fontSize: large ? (compact ? 18 : 22) : (compact ? 14 : 18),
+          color: textColor(card),
           fontWeight: FontWeight.w600,
         ),
       ),
     );
   }
+}
+
+/// Cards in a centred, wrapping line.
+class CardLine extends StatelessWidget {
+  const CardLine(this.cards, {super.key, this.compact = false});
+
+  final List<PlayingCard> cards;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) => Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        alignment: WrapAlignment.center,
+        children: [
+          for (final c in cards) CardWidget(card: c, compact: compact)
+        ],
+      );
 }

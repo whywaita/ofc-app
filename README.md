@@ -35,12 +35,10 @@ The codebase emphasizes testable, pure‑Dart domain logic and a thin UI layer.
 ## Repository Layout
 ```
 ├─ lib/                       # Pure Dart domain logic
-│  ├─ core/models/            # Rank, Suit, PlayingCard, Deck
-│  └─ features/game/domain/   # hand_evaluator, ruleset, foul_checker,
-│                             # score_engine, fantasy_engine, pineapple_engine,
-│                             # cycle_logic, board, board_builder, game_state
-├─ app/                       # Flutter app (Android/iOS only)
-│  └─ lib/                    # main.dart, game_screen.dart, pass_play_screen.dart, result screens
+│  ├─ ofc_core.dart           # the public API (import this only)
+│  └─ src/                    # cards/ hands/ board/ rules/ scoring/ engine/
+├─ app/                       # Flutter app (web first, then Android/iOS)
+│  └─ lib/                    # controllers/ screens/ widgets/ presentation/
 ├─ docs/                      # rdd.md (requirements), todo.md (status)
 ├─ test/                      # Domain unit tests
 ├─ .github/workflows/ci.yml   # CI pipelines
