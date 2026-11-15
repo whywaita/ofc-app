@@ -4,13 +4,18 @@
 
 ## プロジェクト構成（要点）
 - ルート: `lib/`（ドメイン）`test/`（ユニット）`docs/`（要件/タスク）`.github/workflows/ci.yml`
-- ドメイン（純Dart）: `core/models`（Rank/Suit/PlayingCard/Deck）、`features/game/domain`
-  - 主要: `hand_evaluator.dart` `hand_category3/5.dart` `ruleset.dart` `foul_checker.dart`
-          `score_engine.dart` `fantasy_engine.dart` `pineapple_engine.dart` `cycle_logic.dart`
-          `board.dart` `board_builder.dart` `game_state.dart`
-- アプリ（Flutter）: `app/`（Android/iOS のみ）
-  - 主要: `lib/main.dart` `lib/game_screen.dart`（D&D配置/Next3-Commit統一/Sort）
-          `lib/result_screen.dart`（役/ロイヤリティ/ActionLog）
+- ドメイン（純Dart）: 公開 API は `package:ofc_app_core/ofc_core.dart` のみ。実装は `lib/src/`
+  - `cards/`（Rank/Suit/PlayingCard[sealed: StandardCard/Joker]/Deck）
+  - `hands/`（`hand_rank.dart` Hand5Rank/Hand3Rank、`hand_evaluator.dart` ワイルドは全探索）
+  - `board/`（Board、BoardEvaluation: Foul 判定とワイルドの Foul 回避割り当て）
+  - `rules/`（GameOptions/WildMode、Ruleset ロイヤリティ、FantasyState）
+  - `scoring/`（ScoreEngine: ゼロサムのヘッズアップ採点）
+  - `engine/`（PlayerHand: 配置ルールと ActionLog、PracticeSession、HeadsUpMatch）
+- アプリ（Flutter）: `app/`
+  - `lib/controllers/`（HandTableController と Practice/PassPlay の ChangeNotifier）
+  - `lib/screens/`（home / practice / practice_result / pass_play / pass_play_result）
+  - `lib/widgets/`（`hand_table.dart` 共通盤面: D&D・タップ・Semantics、card/result_board/seed_dialog）
+  - `lib/presentation/labels.dart`（表示文言の一元化）
 
 ## タスク実行（Makefile）
 - 解析/テスト/ビルド: `make analyze` `make test` `make build` `make ci`
